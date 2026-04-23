@@ -1,0 +1,21 @@
+# Patient scenario (doctor talking to patient)
+- "Guten Tag, ich bin der Arzt. Was führt Sie her?"
+- "Ich habe seit zwei Tagen starke Brustschmerze (falsch: Plural), so ein stechender Schmerz, vor allem beim Atmen."
+- "Ich fühle mich auch ein bisschen schwindlig und hatte gestern Fieber, so 38,5."
+- (Doc follow-up) "Haben Sie Vorerkrankungen?"
+- "Ja, ich habe schon lange Bluthochtruck (falsch ausgesprochen, richtig: Bluthochdruck) und nehme Ramiprill (falsch ausgesprochen, richtig: Ramipril)."
+- "In meiner Familie hatte mein Vater ein Herzinfart (falsch, richtig: Herzinfarkt)."
+- "Mir wird manchmal kurz schwarz vor Augen, aber nur wenige Sekunden."
+- "Ich rauche leider jeden Tag eine Schachtel."
+- "Ich habe keine Allergien… äh warte, vielleicht doch Peneczilin (falsch, richtig: Penicillin)."
+
+# Doctor-doctor Übergabe (with mistakes)
+- "Patient, 54 Jahre, stellt sich vor mit Brustschmerz seit zwei Tagen, stechend, atemabhängig."
+- "Anamnese: kein richtiger Plan, aber er sagt, Fieber 38,5 und fühlt sich schwindelig."
+- "Vorerkrankungen: Bluthochtruck (falsch, richtig: Bluthochdruck), Medikation: Ramiprill (falsch, richtig: Ramipril)."
+- "Familie: Vater mit Herzinfart (falsch, richtig: Herzinfarkt)."
+- "Keine bekannte Allergien… äh doch, vielleicht Peneczilin (falsch, richtig: Penicillin)."
+- "Ich denke an Pneumothohrax (falsch ausgesprochen, richtig: Pneumothorax) oder vielleicht nur Muskelschmerzen."
+- "EKG hab ich… äh, noch nicht gemacht."
+- "Plan: erst mal beobachten und bisschen Schmerzmittel geben."
+- "Differentialdiagnosen… hab ich gerade keine weiteren."

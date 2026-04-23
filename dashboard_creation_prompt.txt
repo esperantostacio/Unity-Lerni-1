@@ -1,0 +1,182 @@
+WEBSITE DASHBOARD CREATION PROMPT
+=====================================
+
+Project Overview:
+Create a comprehensive web-based dashboard for managing medical examination scenarios with AI-powered avatars and voice interactions.
+
+CORE FEATURES REQUIRED:
+
+1. CUSTOM PROMPTS MANAGEMENT
+   - Allow users to create, edit, and save custom conversation prompts
+   - Provide a rich text editor with formatting options
+   - Enable prompt templates library for quick setup
+   - Support prompt variables and placeholders
+   - Implement prompt versioning and history
+   - Add prompt preview functionality
+
+2. SCENARIO THEME SELECTION
+   - Create a theme selector with multiple pre-built scenarios:
+     * Emergency Room situations
+     * Routine check-ups
+     * Specialized consultations (cardiology, neurology, etc.)
+     * Patient counseling sessions
+     * Diagnosis scenarios
+     * Post-operative care
+   - Allow custom theme creation and configuration
+   - Enable theme duplication and modification
+   - Support theme importing/exporting (JSON format)
+
+3. VOICE & AVATAR CONFIGURATION
+   - Voice Settings:
+     * Multiple voice options (male/female, different accents)
+     * Voice speed and pitch adjustment
+     * Voice quality selection (clarity, tone)
+     * Text-to-speech provider selection
+     * Voice preview before applying
+   
+   - Avatar Management:
+     * Gallery of pre-designed avatars
+     * Avatar customization (appearance, age, gender, ethnicity)
+     * Avatar animation settings
+     * Upload custom avatar option
+     * Avatar behavior configuration (gestures, expressions)
+
+4. TEST EXAM MODULE
+   - Create and manage multiple test exams
+   - Question bank management (add, edit, delete questions)
+   - Exam difficulty levels (beginner, intermediate, advanced)
+   - Time limits per exam
+   - Scoring and grading system
+   - Performance analytics and reports
+   - Export results to CSV/PDF
+   - Exam templates for different medical specialties
+
+5. CONVERSATION TIME SETTINGS
+   - Set maximum conversation duration
+   - Configure time limits per session
+   - Add countdown timer display
+   - Time extension options
+   - Auto-save progress at intervals
+   - Session timeout warnings
+   - Pause/resume functionality
+
+6. USER MANAGEMENT
+   - User authentication (login/logout)
+   - Role-based access control (admin, instructor, student)
+   - User profile management
+   - Activity tracking and logs
+   - Multi-user support with separate workspaces
+
+7. ANALYTICS & REPORTING
+   - Session statistics dashboard
+   - Performance metrics visualization
+   - Student progress tracking
+   - Conversation quality analysis
+   - Export reports in multiple formats
+   - Real-time analytics updates
+
+8. SETTINGS & CONFIGURATION
+   - General application settings
+   - API key management (for AI services)
+   - Language and localization options
+   - Notification preferences
+   - Data backup and restore
+   - System diagnostics
+
+9. CONTENT LIBRARY
+   - Shared resource repository
+   - Medical case studies library
+   - Sample conversations archive
+   - Educational materials section
+   - File upload and organization (documents, images, videos)
+
+10. SESSION MANAGEMENT
+    - Create new training sessions
+    - Load saved sessions
+    - Session history with replay option
+    - Session sharing and collaboration
+    - Session notes and annotations
+
+TECHNICAL REQUIREMENTS:
+
+Frontend:
+- Modern, responsive UI framework (React, Vue.js, or Angular)
+- Clean, intuitive Material Design or similar UI components
+- Mobile-responsive design (works on tablets and smartphones)
+- Dark/Light theme toggle
+- Accessible design (WCAG 2.1 compliant)
+
+Backend:
+- RESTful API architecture
+- Secure authentication (JWT or OAuth)
+- Database support (PostgreSQL, MongoDB, or MySQL)
+- File storage solution (AWS S3 or similar)
+- WebSocket support for real-time features
+
+Integration:
+- AI/NLP API integration (OpenAI, Convai, or similar)
+- Voice synthesis API (Google Text-to-Speech, Azure, etc.)
+- Avatar animation system integration
+- Payment gateway (if monetization needed)
+
+Security:
+- HTTPS encryption
+- Data encryption at rest
+- Regular security audits
+- GDPR compliance
+- User data privacy controls
+
+DESIGN PREFERENCES:
+- Professional medical/educational aesthetic
+- Clean, modern interface
+- Intuitive navigation with sidebar menu
+- Dashboard home page with quick actions
+- Color scheme: Professional blues, whites, with accent colors
+- Card-based layout for different sections
+- Drag-and-drop functionality where applicable
+
+PRIORITY FEATURES (MVP):
+1. User authentication
+2. Custom prompt creation
+3. Scenario theme selection (at least 5 pre-built themes)
+4. Basic voice selection
+5. Simple avatar selection
+6. Conversation time settings
+7. Basic test exam creation
+
+FUTURE ENHANCEMENTS:
+- Mobile app version
+- Multi-language support
+- AI-powered prompt suggestions
+- Advanced analytics with ML insights
+- Integration with Learning Management Systems (LMS)
+- Virtual Reality (VR) support
+- Collaborative features (multi-user sessions)
+- API access for third-party integrations
+
+DELIVERABLES:
+1. Fully functional web dashboard
+2. User documentation
+3. API documentation
+4. Admin manual
+5. Source code with comments
+6. Deployment guide
+7. Training materials
+
+DEPLOYMENT:
+- Cloud hosting (AWS, Azure, or Google Cloud)
+- Auto-scaling capability
+- CI/CD pipeline setup
+- Monitoring and logging system
+- Backup and disaster recovery plan
+
+BUDGET & TIMELINE:
+[To be determined based on scope and requirements]
+
+ADDITIONAL NOTES:
+- The dashboard should be designed with medical education in mind
+- Prioritize user experience and ease of use
+- Ensure system is scalable for growing user base
+- Include comprehensive error handling and user feedback
+- Implement real-time status updates for all operations
+- Add helpful tooltips and onboarding tutorials for new users

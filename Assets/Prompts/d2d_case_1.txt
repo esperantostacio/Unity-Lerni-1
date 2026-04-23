@@ -1,0 +1,130 @@
+---
+
+# PATIENT CASE 1
+
+---
+
+## 1. DEMOGRAPHIC DATA
+
+- Name: Holger Drescher
+- Age: 66
+- Sex: male
+- Admission: emergency department, accompanied by his son
+- Treating candidate: ward physician, internal medicine, Neustadt Hospital
+- AI counterpart: Prof. Dr. Hofmann, Chief Physician of Internal Medicine
+
+---
+
+## 2. MAIN COMPLAINT, SYMPTOMS, AND TIMELINE
+
+- Main complaint: retrosternal chest tightness radiating to left shoulder
+- Onset: this morning after breakfast
+- Associated symptoms: anxiety, nausea
+- Course: symptoms already regressing at ED presentation; currently asymptomatic
+
+---
+
+## 3. RELEVANT HISTORY
+
+### Comorbidities:
+- Type 2 diabetes mellitus (diagnosed 2009)
+- COPD GOLD grade II (diagnosed 2014)
+
+### Risk factors:
+- Active smoker: 28 years, 1 pack/day (28 pack-years)
+- Type 2 diabetes mellitus
+
+### Current medication before admission:
+- Metformin 1000 mg PO 1-0-1
+- Salbutamol 200 mcg inhaled as needed
+
+### Inpatient medication adjustment:
+- Metformin paused before planned coronary angiography
+
+### Allergies:
+- None known
+
+### Social history:
+- Retired
+- Married
+- One son (accompanied patient to ED)
+
+### Family history:
+- Father had myocardial infarction at age 59
+
+---
+
+## 4. FINDINGS
+
+### Admission vitals:
+- Blood pressure: 90/60 mmHg (hypotensive)
+- Heart rate: 140/min (tachycardic)
+- Respiratory rate: 17/min
+- SpO2: 95% on room air
+- Temperature: 36.5 C (afebrile)
+
+### Current inpatient status:
+- Blood pressure: 125/85 mmHg
+- Heart rate: 94/min
+- Clinical: asymptomatic
+
+### Physical examination:
+- Unremarkable: lungs, abdomen, extremities, neurological exam
+- Abnormal: holosystolic murmur, punctum maximum left 5th intercostal space midclavicular, radiation to left axilla
+
+### Laboratory values:
+- Normal: CK, LDH, liver panel, glucose, electrolytes
+- Elevated:
+  a) Troponin T elevated -> myocardial injury
+  b) HbA1c 6.9% elevated -> suboptimal diabetes control
+
+### ECG:
+- Heart rate: 100/min
+- Rhythm: sinus rhythm
+- Axis: left axis deviation
+- ST changes: ST depression in V1 and V2
+- Posterior leads (V7-V9): unremarkable
+- R/S ratio: > 1
+
+---
+
+## 5. PRELIMINARY DIAGNOSIS AND DIFFERENTIALS
+
+### Suspected diagnosis:
+- NSTEMI (non-ST-elevation myocardial infarction)
+- Rationale: elevated troponin + ST depression V1/V2 + typical symptoms (retrosternal tightness, left-shoulder radiation, nausea) + cardiovascular risk factors (smoking, diabetes, positive family history)
+
+### Differential diagnoses:
+1. Unstable angina (no troponin rise would be expected)
+2. Posterior STEMI (less likely with unremarkable V7-V9)
+3. Aortic dissection (missing classic signs)
+4. Pulmonary embolism (limited support)
+5. Hypertensive emergency with angina (admission BP was hypotensive)
+
+---
+
+## 6. RECOMMENDED MANAGEMENT AND PLAN
+
+### Immediate measures (already initiated):
+- Continuous ECG monitoring
+- IV access and blood sampling (serial troponin)
+- Oxygen if needed
+- Metformin paused
+
+### Planned measures:
+- Early elective coronary angiography within 72 hours (NSTEMI + diabetes risk)
+- Depending on findings: primary PCI with stent possible
+- Daily glucose profile
+- Further diabetes optimization
+
+### Open clinical questions:
+- Extent of coronary artery disease (single vs multi-vessel) -> clarify via angiography
+- Cause of holosystolic murmur: mitral regurgitation? papillary muscle dysfunction? -> echocardiography recommended
+- Reassess COPD therapy in context of cardiac disease
+- Start guideline-based antiplatelet/anticoagulation strategy
+
+---
+
+END
+
+---

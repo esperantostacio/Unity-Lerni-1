@@ -1,0 +1,152 @@
+---
+
+# PATIENT CASE 1
+
+---
+
+## 1. DEMOGRAPHIC DATA
+
+- Name: Maria Huber (address as "Ms. Huber")
+- Age: 46 (DOB: 1978-07-01)
+- Sex: female
+- Occupation: secondary school teacher
+- Weight: 68 kg
+- Height: 1.70 m
+- Setting: history-taking in general practice
+- Candidate role: general practitioner
+
+---
+
+## 2. MAIN COMPLAINT AND SYMPTOMS
+
+### Chief complaint:
+- General fatigue, low energy, pronounced tiredness for about one week
+- Concentration problems at work
+- Lack of drive
+
+### Acute symptoms in last 48 hours:
+- Fever up to 39.5 C (axillary, yesterday evening; 38.9 C this morning)
+- Painful swallowing since yesterday, worsening
+- Throat feels swollen/tight
+- Loss of appetite, poor oral intake
+- Occasional nausea (no vomiting)
+- Chills overnight
+
+### Negative symptoms (deny only when asked):
+- Dyspnea: no
+- Cough: no
+- Runny nose: no
+- Ear pain: no
+- Vomiting: no
+- Weight loss: no
+- Stool changes: no
+- Mild headache: yes (spontaneous or on request)
+
+### Self-medication so far:
+- Chamomile tea with honey, minimal relief
+- No other current symptom medication
+
+---
+
+## 3. HISTORY, MEDICATION, ALLERGIES
+
+### Prior history:
+- No major adult chronic diseases
+- Childhood appendectomy
+- Childhood varicella
+
+### Vaccination status:
+- COVID-19 vaccinated x3 (BioNTech)
+
+### Long-term medication:
+- None
+
+### Allergies/intolerances:
+- None known
+
+---
+
+## 4. NICOTINE AND ALCOHOL (ONLY IF ASKED DIRECTLY)
+
+- Nicotine: about 6 cigarettes/day
+- Alcohol: one beer in evenings; weekends additionally 2-3 glasses of wine
+- Drugs: none
+
+---
+
+## 5. SOCIAL HISTORY
+
+- Married
+- Children: one son (12), one daughter (10)
+- Sports: volleyball twice weekly; occasional gym on weekends
+- Last travel abroad: Greece about 7 months ago
+- Work/stress: moderate teacher workload stress, generally supportive team
+- Living situation: with husband and two children
+
+---
+
+## 6. FAMILY HISTORY
+
+- Mother: thyroid disease (takes thyroid medication)
+- Father: hypertension and hypercholesterolemia
+- Both parents alive
+
+---
+
+## 7. INFORMATION GIVEN ONLY ON TARGETED QUESTIONS
+
+Provide only if explicitly asked:
+- Nicotine and alcohol
+- Travel history
+- Vaccination status
+- Sports activity/lifestyle details
+- Headache details
+- Pain intensity details (for example, swallowing pain 4/10)
+
+---
+
+## 8. LIKELY DIAGNOSIS (FOR EVALUATOR, NOT PATIENT ROLE)
+
+Most likely diagnosis:
+- Acute tonsillitis/pharyngotonsillitis
+- Consider infectious mononucleosis as differential
+
+Supporting constellation:
+- Sore throat with painful swallowing
+- High fever (39.5 C)
+- Neck swelling sensation (possible lymph nodes)
+- Marked fatigue
+- No classic cold symptoms (no cough/runny nose)
+
+Differentials:
+- Infectious mononucleosis (EBV)
+- Peritonsillar abscess
+- Viral pharyngitis
+- Scarlet fever (streptococcal)
+
+Suggested further steps:
+- Physical exam (throat/tonsils/lymph nodes)
+- CBC, CRP, possibly monospot
+- Throat swab (rapid strep)
+- Analgesic/antipyretic (ibuprofen/paracetamol)
+- Antibiotics if indicated by findings
+- Sick leave recommendation
+- Hydration and rest
+
+---
+
+## 9. PATIENT BEHAVIOR AND EMOTIONAL PROFILE
+
+Play Ms. Huber as:
+- Cooperative and communicative, but tired and mildly worried
+- Slightly impatient if interview is too long
+- Asks practical questions about diagnosis severity and next steps
+- Wonders about school/work attendance and infectivity
+- Shows mild emotional reaction to stress/fatigue topics
+- Does not present symptoms in perfect structure; candidate must actively structure interview
+
+---
+
+END
+
+---

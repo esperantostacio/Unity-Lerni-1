@@ -1,0 +1,376 @@
+================================================================================
+MEDICAL KNOWLEDGE BASE - SAMPLE CONTENT
+Sample data extracted from medical books for RAG testing
+Created: March 1, 2026
+================================================================================
+
+DOCUMENT ID: ANATOMY_001
+CATEGORY: Anatomy
+SCENARIO_TAGS: anatomy_drill, physiotherapy, orthopedics
+CLINICAL_CONTEXT: General anatomical reference
+
+---
+HUMAN NEUROANATOMY
+
+1. ANATOMICAL PLANES AND POSITIONS
+   - Sagittal Plane: Divides body into left and right halves
+   - Coronal Plane: Divides body into front and back
+   - Transverse Plane: Divides body into superior and inferior parts
+
+2. ANATOMICAL DIRECTIONS
+   - Ventral (Anterior): Front side of the body
+   - Dorsal (Posterior): Back side of the body
+   - Cranial (Superior): Toward the head
+   - Caudal (Inferior): Toward the tailbone
+   - Medial: Toward the midline
+   - Lateral: Away from the midline
+   - Proximal: Closer to the center/origin of limb
+   - Distal: Further from the center/origin of limb
+   - Radial: Toward the thumb side of forearm
+   - Ulnar: Toward the pinky side of forearm
+
+3. SPINAL NERVE DISTRIBUTION
+   - Cervical Spine (C1-C8): Neck, shoulders, arms
+   - Thoracic Spine (T1-T12): Mid-back, ribs
+   - Lumbar Spine (L1-L5): Lower back, legs
+   - Sacral Spine (S1-S5): Pelvis, lower limbs
+   - Coccygeal: Tail region
+
+4. COMMON ANATOMICAL LANDMARKS
+   - Vertebra Prominens (C7): Most prominent cervical vertebra
+   - Acromion Process: Highest point of shoulder
+   - ASIS (Anterior Superior Iliac Spine): Front pelvic landmark
+   - PSIS (Posterior Superior Iliac Spine): Back pelvic landmark
+
+
+================================================================================
+DOCUMENT ID: CARDIO_001
+CATEGORY: Cardiology
+SCENARIO_TAGS: cardiovascular, emergency_medicine, paramedic
+CLINICAL_CONTEXT: Cardiac examination and diagnostics
+
+---
+CARDIOVASCULAR SYSTEM EXAMINATION
+
+1. VITAL SIGNS ASSESSMENT
+   - Heart Rate (HR): Normal 60-100 bpm at rest
+   - Blood Pressure (BP): Normal <120/80 mmHg
+   - Respiratory Rate (RR): Normal 12-20 breaths/min
+   - Temperature: Normal 36.5-37.5°C (98.6-99.5°F)
+   - Oxygen Saturation (SpO2): Normal >95% on room air
+
+2. CARDIAC AUSCULTATION
+   - S1 (First Heart Sound): Lub - closure of AV valves (mitral, tricuspid)
+   - S2 (Second Heart Sound): Dub - closure of semilunar valves (aortic, pulmonic)
+   - Normal rate: Regular rhythm, S1 & S2 clearly heard
+   - Murmurs: Abnormal turbulent blood flow sounds
+   - Gallops: S3 (ventricular filling) or S4 (atrial contraction)
+
+3. PULSE ASSESSMENT
+   - Rate: Normal 60-100 bpm
+   - Rhythm: Regular or regularly irregular
+   - Amplitude: Strength of pulse (bounding vs weak)
+   - Laterality: Compare left vs right side symmetry
+
+4. CHEST PAIN EVALUATION (RED FLAGS)
+   - Acute coronary syndrome: Chest pressure/heaviness, radiation to arm/jaw
+   - Tachycardia: HR >100 bpm at rest
+   - Diaphoresis: Excessive sweating
+   - Dyspnea: Shortness of breath
+   - Hypotension: Systolic BP <90 mmHg
+
+
+================================================================================
+DOCUMENT ID: NEURO_001
+CATEGORY: Neurology
+SCENARIO_TAGS: stroke, aphasia, neuro_exam, speech_pathology
+CLINICAL_CONTEXT: Neurological assessment and stroke evaluation
+
+---
+STROKE AND NEUROLOGICAL DEFICIT
+
+1. STROKE RECOGNITION (FAST TEST)
+   - F (Face): Ask to smile, check for asymmetry
+   - A (Arm): Raise both arms, check for drift
+   - S (Speech): Repeat simple phrase, check for slurring
+   - T (Time): Note exact time of symptom onset
+
+2. APHASIA TYPES AND CHARACTERISTICS
+   - Broca's Aphasia: Non-fluent, expressive difficulty, comprehension preserved
+     * Speech effortful and slow
+     * Telegraphic speech (short phrases, mostly content words)
+     * Repetition often impaired
+     * Comprehension relatively intact
+   
+   - Wernicke's Aphasia: Fluent but meaningless, comprehension severe impairment
+     * Speech flows easily but lacks meaning
+     * Paraphasias (sound/word substitutions)
+     * Severe comprehension deficit
+     * Repetition impaired
+
+3. COMMON STROKE SYMPTOMS
+   - Unilateral weakness (hemiparesis)
+   - Facial droop (asymmetry)
+   - Speech difficulty (dysarthria, aphasia)
+   - Vision loss (monocular or field cut)
+   - Ataxia (loss of coordination)
+   - Vertigo (room spinning sensation)
+
+4. STROKE TIMELINE (CRITICAL FOR TREATMENT)
+   - Time = Brain: Every minute ~190,000 neurons die
+   - Thrombolytic window: 0-4.5 hours from symptom onset (critical)
+   - Mechanical thrombectomy: 0-24 hours (with imaging evidence)
+   - Post-stroke care: 24-72 hours assessment and rehabilitation
+
+
+================================================================================
+DOCUMENT ID: ORTHO_001
+CATEGORY: Orthopedics & Physiotherapy
+SCENARIO_TAGS: physiotherapy, back_pain, neck_pain, musculoskeletal, ergonomics
+CLINICAL_CONTEXT: Musculoskeletal assessment and physiotherapy
+
+---
+MUSCULOSKELETAL ASSESSMENT
+
+1. NECK PAIN (CERVICAL SYNDROME) - COMMON PRESENTATION
+   - Patient Profile: Often office workers, prolonged sitting
+   - Classic Symptoms:
+     * Neck stiffness, limited range of motion
+     * Headaches (cervicogenic origin)
+     * Referred pain to shoulders/arms
+     * Possible paresthesia (numbness/tingling)
+   
+   - Ergonomic Risk Factors:
+     * Monitor height too low (causes forward head posture)
+     * Desk height inappropriate for arm position
+     * Lack of micro-breaks during work
+     * Poor chair support
+
+2. LOWER BACK PAIN (LUMBAR SYNDROME)
+   - Red Flags Requiring Urgent Imaging:
+     * Cauda equina syndrome: bilateral leg pain, saddle anesthesia, bladder loss
+     * Fracture: trauma history, osteoporosis, sudden onset
+     * Malignancy: night pain, weight loss, age >50
+     * Infection: fever, IV drug use, immunosuppression
+   
+   - Radiculopathy Pattern (L4/L5 nerve root involvement):
+     * Pain radiates down LATERAL leg/calf
+     * Weakness in dorsiflexion (foot drop)
+     * Numbness in foot dorsum
+     * Diminished ankle reflex
+
+3. ASSESSMENT PROTOCOL
+   - Range of Motion (ROM) Testing:
+     * Flexion: Touch toes (normal near 0-10cm)
+     * Extension: Arch backward (normal 20-30°)
+     * Lateral flexion: Bend sideways (normal 15-20°)
+     * Rotation: Turn shoulders (normal 40-45°/side)
+   
+   - Special Tests:
+     * Straight Leg Raise (SLR): Radiculopathy if pain <60°
+     * Crossed SLR: Higher specificity for nerve root compression
+     * Palpation: Identify tender points, trigger points
+
+4. WORKPLACE ERGONOMICS ADVICE
+   - Monitor: Eye level (15° below horizontal)
+   - Keyboard/Mouse: Elbows 90° flexion
+   - Chair: Hip slightly higher than knees, armrest support
+   - Breaks: Every 30min, 5min movement break
+   - Posture: Neutral spine (natural curves maintained)
+
+
+================================================================================
+DOCUMENT ID: SPEECH_001
+CATEGORY: Speech-Language Pathology
+SCENARIO_TAGS: speech_pathology, logopedics, aphasia, communication_disorders
+CLINICAL_CONTEXT: Speech and language assessment
+
+---
+LANGUAGE DEVELOPMENT AND DISORDERS
+
+1. TYPICAL LANGUAGE DEVELOPMENT (CHILDREN)
+   - 0-3 months: Cooing sounds
+   - 3-6 months: Babbling (da-da, ba-ba)
+   - 6-12 months: First words ("mama", "dada")
+   - 12-18 months: 50 word vocabulary, two-word combinations emerging
+   - 18-24 months: 50-100+ words, simple sentences
+   - 2-3 years: 500+ words, grammar developing
+   - 3-5 years: Complex sentences, story-telling ability
+
+2. AUTISM SPECTRUM DISORDER (ASD) - RED FLAGS
+   - Language Delays:
+     * Limited vocabulary for age
+     * Echolalia (repeating words without understanding)
+     * Pronoun reversal ("you" for "I")
+     * Limited gesture use (pointing, waving)
+   
+   - Social Communication Issues:
+     * Limited eye contact
+     * Difficulty with joint attention
+     * Unusual prosody (speech melody/rhythm)
+     * Limited interest in peer interaction
+
+3. LATE TALKER vs LANGUAGE DISORDER
+   - Late Talker (Better Prognosis):
+     * Age 18-30 months, <50 words
+     * Normal comprehension
+     * Good non-verbal skills
+     * Typical play development
+   
+   - Language Disorder (Needs Intervention):
+     * Age 24+ months with significant delay
+     * Comprehension also impaired
+     * Limited gesture/non-verbal communication
+     * Unusual play patterns
+
+4. ASSESSMENT QUESTIONS FOR CAREGIVERS
+   - Does child understand simple directions ("Get your shoes")?
+   - Does child point to objects of interest?
+   - Does child make eye contact during interaction?
+   - Does child use gestures (waving, pointing)?
+   - How many words does child use?
+   - Does child combine words (2+ word phrases)?
+   - Does child engage in pretend play (playing house, etc)?
+
+
+================================================================================
+DOCUMENT ID: MIDWIFERY_001
+CATEGORY: Obstetrics & Midwifery
+SCENARIO_TAGS: midwifery, postpartum, lactation, neonatal
+CLINICAL_CONTEXT: Postpartum assessment and newborn care
+
+---
+POSTPARTUM ASSESSMENT AND NEONATAL CARE
+
+1. POSTPARTUM MOTHER - EARLY ASSESSMENT (24-72 HOURS)
+   - Vital Signs Monitoring:
+     * Heart Rate: May be elevated 80-100 bpm (fluid shifts)
+     * Blood Pressure: Should normalize to pre-pregnancy levels
+     * Temperature: Fever >38°C suggests infection
+     * Lochia: Vaginal discharge - normal progression: rubra→serosa→alba
+   
+   - Episiotomy/Wound Healing:
+     * Mild erythema normal first 24h
+     * Excessive swelling/redness suggests infection
+     * Significant pain warrants evaluation
+     * Assess for dehiscence (opening)
+
+2. BREASTFEEDING SUPPORT
+   - Common Issues & Solutions:
+     * Engorgement: Warm compress before feeding, cold after
+     * Sore Nipples: Correct latch is crucial, lanolin/hydrogel pads
+     * Low Supply: Frequent feeds (8-12x/day), adequate hydration
+     * Mastitis: Fever, localized redness/pain - antibiotic treatment
+   
+   - When to Suggest "Abpumpen" (Pumping):
+     * Mother needs rest but supply to maintain
+     * Sore nipples preventing direct feeding
+     * Working outside home requiring milk expression
+     * Oversupply causing engorgement
+
+3. NEWBORN ASSESSMENTS (FIRST 24-48 HOURS)
+   - Jaundice Screening:
+     * Physiologic jaundice: Appears after 24h
+     * Bilirubin levels: <5mg/dL day 1, <15mg/dL day 3
+     * Risk factors: Prematurity, hemolytic disease, poor feeding
+   
+   - Weight Patterns:
+     * Birth weight baseline
+     * 5-10% loss normal in first 3-5 days
+     * Recovery to birth weight by day 10-14
+     * Poor feeding pattern if >10% loss
+
+4. FEEDING MODE COUNSELING
+   - Breastfeeding Benefits:
+     * Optimal nutrition and immunity building
+     * Mother-baby bonding and oxytocin benefits
+     * Cost-effective, always available
+   
+   - When Additional Feeding May Be Needed:
+     * Excessive weight loss (>10%)
+     * Poor latch despite support
+     * Low maternal supply (rare initially)
+     * Medical conditions (maternal infection, neonatal hypoglycemia)
+
+
+================================================================================
+DOCUMENT ID: EMERGENCY_001
+CATEGORY: Emergency Medicine
+SCENARIO_TAGS: paramedic, emergency_medicine, trauma, ABCDE, SAMPLER
+CLINICAL_CONTEXT: Emergency assessment protocols
+
+---
+EMERGENCY ASSESSMENT PROTOCOLS
+
+1. PRIMARY SURVEY - ABCDE APPROACH
+   - A (Airway): Is it patent? Clear obstruction?
+   - B (Breathing): Respiratory rate, effort, SpO2?
+   - C (Circulation): Pulse present? Hemorrhage control?
+   - D (Disability): Consciousness level = GCS score
+   - E (Exposure): Undress to examine, prevent hypothermia
+
+2. SECONDARY SURVEY - SAMPLER HISTORY
+   - S (Symptoms): What does patient report?
+   - A (Allergies): Medication allergies documented?
+   - M (Medications): Current medications taken?
+   - P (Past Medical History): Relevant conditions?
+   - L (Last Meal): When did they last eat/drink?
+   - E (Events): What led to this incident?
+   - R (Reason): Chief complaint in patient's words
+
+3. CONSCIOUSNESS ASSESSMENT - GLASGOW COMA SCALE (GCS)
+   - Eye Opening (E): 1-4 points
+     * 4: Spontaneous
+     * 3: To verbal command
+     * 2: To pain
+     * 1: No response
+   
+   - Verbal Response (V): 1-5 points
+     * 5: Oriented and conversing
+     * 4: Disoriented conversation
+     * 3: Inappropriate words
+     * 2: Incomprehensible sounds
+     * 1: No response
+   
+   - Motor Response (M): 1-6 points
+     * 6: Obeys commands
+     * 5: Localizes pain
+     * 4: Withdraws from pain
+     * 3: Abnormal flexion (decorticate)
+     * 2: Abnormal extension (decerebrate)
+     * 1: No response
+   
+   - Score Interpretation:
+     * Severe: GCS ≤8 (intubation consideration)
+     * Moderate: GCS 9-12
+     * Mild: GCS 13-15
+
+4. TRAUMA ASSESSMENT COMMON SCENARIOS
+   - Bike Fall Impact Pattern:
+     * Assess for head injury (neurological signs)
+     * Rib fractures (pain on inspiration, possible pneumothorax)
+     * Limb injury (neurovascular integrity)
+     * Abdominal injury (tenderness, rigidity)
+   
+   - Red Flags Requiring Immediate Admission:
+     * Loss of consciousness
+     * Severe head/chest/abdominal pain
+     * Neurological deficits
+     * Significant deformity
+
+
+================================================================================
+METADATA FOR SYSTEM PROCESSING
+This file is structured with:
+- DOCUMENT ID: Unique identifier for tracking
+- CATEGORY: Medical specialty
+- SCENARIO_TAGS: Linked to exam scenarios
+- CLINICAL_CONTEXT: When to apply this knowledge
+- Content: Organized by sections with numbered points
+
+During RAG processing:
+1. Split into logical chunks (300-500 tokens each)
+2. Generate embeddings for each chunk
+3. Tag with scenario and clinical relevance
+4. Store in vector database for retrieval
+================================================================================

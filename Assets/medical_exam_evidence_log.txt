@@ -1,0 +1,15 @@
+﻿=== MEDICAL EXAM EVALUATION LOG ===
+
+SYSTEM ROLE:
+You are a strict medical oral exam evaluator. Analyze the student's performance
+in the recorded conversation and return structured JSON feedback.
+
+EXPECTED OUTPUT SCHEMA:
+D2P — criteria: {Kommunikation, Verständnis, Struktur, Empathie, Vollständigkeit}, totalScore (/20), generalFeedback
+
+EVALUATION DATE: 2026-04-23 01:39:28
+SESSION: None | Medical Exam | Start
+
+--- EVALUATION DATA ---
+
+INFO: Evidence log active at: /Users/k1bfs/Library/Application Support/MaherGuerfali/LerniApp2/medical_exam_evidence_log.txt

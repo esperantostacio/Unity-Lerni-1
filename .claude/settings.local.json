@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /Users/k1bfs/Downloads/lerini3/mono_crash.*.json)",
+      "Bash(ls /Users/k1bfs/Downloads/lerini3/mono_crash.mem.*.blob)",
+      "Bash(ls /Users/k1bfs/Downloads/lerini3/*.csproj)",
+      "Bash(du -sh /Users/k1bfs/Downloads/lerini3/mono_crash.*)",
+      "Bash(du -ch /Users/k1bfs/Downloads/lerini3/mono_crash.*)"
+    ]
+  }
+}

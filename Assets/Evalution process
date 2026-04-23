@@ -1,0 +1,68 @@
+
+Explored evaluation flow and reviewed relevant files
+Subagent: Explore evaluation flow
+Reviewed content from lines 1 to 300
+Here's a complete breakdown of the evaluation system:
+
+How Evaluation is Triggered
+Three ways to start it:
+
+User presses the "End" button → InterruptAndEvaluate()
+Exam timer expires → InterruptAndEvaluate()
+A "DEEPLY" keyword appears in realtime transcription → ForceParseNow()
+Guard check first: if the user spoke fewer than ~8 words or the transcript is under ~40 chars, it skips the API call entirely and returns a zero-score result.
+
+The Evaluation Pipeline
+
+InterruptAndEvaluate()  → stops mic + disconnects realtime WebSocket  → StartFinalEvaluationPipeline()      → WhisperThenEvaluate()    ← builds the evidence payload          → EvaluationDisplayUI.ParseAndDisplayConversation...()              → SendTranscriptAndRealtimeFeedbackToGPTForEvaluation()                  → 1 call to OpenAI /v1/chat/completions (temp 0.2, max_tokens 900)                  → parses JSON response → ExamEvaluation object
+What Data Is Assembled Before Sending
+WhisperThenEvaluate() builds a layered transcript string:
+
+Layer	Content
+[START_PROMPT] block	The exact patient/examiner role prompt used at session start
+Core transcript	Live "User: …\nAI: …" log built turn-by-turn
+Post-hoc Whisper	If raw mic audio was buffered, it gets transcribed and appended
+Pronunciation notes	Per-turn JSON notes from EvaluatePronunciationTurn()
+Speech error notes	Structured grammar/fluency/word-choice events per turn
+Then EvaluationDisplayUI wraps this further into {COMBINED_INPUT}:
+
+
+REFERENCE MEDICAL KNOWLEDGE (RAG retrieved for scenario):...THEMENSPEZIFISCHER BEWERTUNGSKONTEXT (eval.evaluatorguid.d2d/d2p from CSV):...FULL CONVERSATION TRANSCRIPT (verbatim):...REALTIME AI FEEDBACK:...
+Truncated to 28,000 chars if too long (head 14K + tail 14K).
+
+Prompts Sent
+D2D (Doctor-to-Doctor) — 3-dimension rubric
+System (eval.one_call.d2d.system):
+
+"You are an experienced FSP examiner for the AAG. Professional language (Fachsprache) is mandatory — lay language used with a medical colleague is an error. Answer ONLY with a valid JSON object."
+
+User (eval.one_call.d2d.user_template) asks GPT to score:
+
+sprachlicheAngemessenheit 0–7 (medical precision, grammar, register)
+inhaltlicheAngemessenheit 0–3 (completeness of case handover)
+malusPatientensicherheit 0–5 (penalty for dangerous errors)
+gesamt = sum − malus, clamped to 0–10
+Pass threshold: gesamt ≥ 5 AND sprachlicheAngemessenheit ≥ 4
+
+D2P (Doctor-to-Patient) — 5-dimension rubric
+System (eval.one_call.d2p.system):
+
+"You are an experienced FSP examiner for the APG. Evaluate ONLY language and communication competencies at C1 level. Answer ONLY with a valid JSON object."
+
+User (eval.one_call.d2p.user_template) asks GPT to score:
+
+kommunikation 0–3 (clarity, word choice, grammar)
+hoerverstehen 0–3 (active listening, follow-up questions)
+gespraechsfuehrung 0–3 (structure, anamnesis coverage)
+empathie 0–3 (respect, reassurance, patient-oriented tone)
+vollstaendigkeit 0–3 (completeness of medical history gathering)
+totalPoints = sum (0–15)
+Pass threshold: totalPoints ≥ 9
+
+Response Parsing
+The raw JSON from GPT goes through:
+
+TryExtractJsonObject() — finds {…} boundaries
+TryParseJSON3D_D2D() or TryParseJSON5D() — reads scores + feedback per dimension
+If keys are missing → RepairJSONResponse() sends it back to GPT asking it to reformat
+Final fallback: legacy regex scanning for "Terminologie: N/5" style text, then ParseWithGPT() as a last-resort re-extraction pass

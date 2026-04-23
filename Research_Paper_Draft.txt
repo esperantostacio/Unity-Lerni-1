@@ -1,0 +1,70 @@
+
+SCIENTIFIC PAPER DRAFT
+================================================================================
+TITLE: Scaffolding Professional Language Competence in Virtual Reality: A Dual-Layer Generative AI Architecture for Vocational Training
+
+ABSTRACT
+--------------------------------------------------------------------------------
+This paper presents the design and implementation of a Virtual Reality (VR) framework aimed at enhancing professional language acquisition for specialists with a migration background. Focusing on the domain of "German for Medical Purposes," we propose a novel "Dual-Layer" Artificial Intelligence architecture. This system solves the dichotomy between high-speed conversational immersion and deep pedagogical evaluation. By decoupling the conversational agent (Layer 1) from the evaluation logic (Layer 2: Fine-Tuned GPT-4), the system provides learners with authentic, low-latency professional simulations followed by structured, criterion-referenced feedback. This approach operationalizes the concept of "Situated Learning" and demonstrates how Generative AI can be harnessed to create scalable, self-paced vocational training environments.
+
+1. INTRODUCTION AND MOTIVATION
+--------------------------------------------------------------------------------
+The integration of skilled specialists into the German labor market is frequently hindered not by technical incompetence, but by language barriers specific to professional registers (Fachsprache). In vocational fields such as medicine—and increasingly in technical trades like metalworking and welding—the ability to communicate precisely under pressure is a safety-critical skill.
+
+Traditional classroom-based language instruction often fails to replicate the situational pressure and multimodal context of a workplace. Virtual Reality (VR) offers a solution by providing "Situated Learning" environments. However, previous VR language learning tools were limited by pre-scripted dialogue trees, which lack authenticity. The advent of Large Language Models (LLMs) allows for free speech interaction, but standard models often prioritize "helpfulness" over strict pedagogical correction, making them poor examiners.
+
+This research introduces a prototypical implementation (`lerini3`) that addresses these limitations through a specialized architecture designed to foster both communicative fluency and linguistic accuracy.
+
+2. THEORETICAL FRAMEWORK
+--------------------------------------------------------------------------------
+2.1 Situated Learning in VR
+Our approach aligns with Lave and Wenger’s theory of Situated Learning, positing that learning is unintentional and situated within authentic activity, context, and culture. The VR simulation places the learner in the role of a doctor, forcing them to navigate a patient interview (Anamnesis) and a colleague handover (Übergabe).
+
+2.2 Scaffolding via AI
+We utilize Vygotsky’s Zone of Proximal Development (ZPD) by using AI as a "More Knowledgeable Other." The system provides "Scaffolding" not by simplifying the task, but by providing post-hoc feedback that structures the learner's reflection, allowing them to attempt the complex task again with better strategies.
+
+3. SYSTEM ARCHITECTURE: THE DUAL-LAYER MODEL
+--------------------------------------------------------------------------------
+To achieve both realism and pedagogical rigor, the system uses a split-architecture approach implemented in Unity 3D designed to run on standalone VR headsets.
+
+3.1 Layer 1: The Interaction Layer (Synchronous)
+The primary goal of this layer is *Immersion* and *Latency Minimization*.
+- **Role**: Simulates the patient.
+- **Behavior**: The agent is prompted to be "naive" and "concerned," using layman’s terms to force the learner to translate medical concepts.
+- **Technology**: Uses a high-speed Speech-to-Text (Whisper) and a latency-optimized LLM configuration. Crucially, this layer performs "Silent Observation"—logging paralinguistic markers (hesitations, false starts, pronunciation errors) into a metadata track without interrupting the user.
+
+3.2 Layer 2: The Evaluation Layer (Asynchronous)
+The primary goal of this layer is *Pedagogical Precision*.
+- **Role**: Simulates a strict medical examiner (Prüfer).
+- **Behavior**: This layer does not run in real-time. Once the scenario concludes, the full session transcript, combined with the "Silent Observation" metadata, is sent to a specialized model.
+- **Technology**: A GPT-4 model Fine-Tuned on a custom dataset of medical exams. This fine-tuning was necessary to override the model's default "polite assistant" bias, forcing it to adhere to a strict grading rubric.
+
+4. THE EVALUATION STRATEGY
+--------------------------------------------------------------------------------
+A core contribution of this work is the methodology used to automate assessment. We rejected generic "feedback" in favor of a psychometric approach.
+
+4.1 The Fine-Tuning Dataset
+We curated a dataset of doctor-patient interactions annotated with grade structures. The model was trained to output data exclusively in a strict JSON schema, ensuring machine-readable consistency.
+
+4.2 Assessment Dimensions
+The system evaluates performance on three distinct axes (Likert Scale 0-5):
+1. **Terminologie (Terminology)**: Assesses the precision of medical vocabulary (e.g., using "Appendizitis" vs. "Blinddarmentzündung" in the correct context).
+2. **Verständlichkeit (Intelligibility)**: Evaluates grammar, sentence structure, and the logical flow of the anamnesis.
+3. **Aussprache (Pronunciation)**: Utilizes the transcription confidence scores and phonetic approximation to flag specific words that were unclear.
+
+4.3 The Doctor-to-Doctor Transfer
+The system specifically tests "Register Switching." After the patient interview, the user must present the case to a senior physician avatar. The AI evaluates whether the user successfully switches from empathetic patient-language to precise medical terminology—a key competency in vocational integration.
+
+5. IMPLEMENTATION DETAILS
+--------------------------------------------------------------------------------
+The prototype was built using the Unity engine.
+- **Audio Pipeline**: We integrated OpenAI's Whisper for ASR and a hybrid TTS solution (incorporating ElevenLabs and OpenAI TTS) to ensure emotional variance in voice output.
+- **Feedback Loop**: Upon evaluation completion, the JSON payload is deserialized into C# objects that drive a diegetic interface in VR. Visual sliders and a generated voice-over provide immediate, actionable critique.
+
+6. CONCLUSION AND FUTURE OUTLOOK
+--------------------------------------------------------------------------------
+This pilot study demonstrates that Generative AI, when constrained by a robust "Dual-Layer" architecture and fine-tuned on domain-specific data, can successfully serve as an autonomous tutor for complex vocational skills.
+
+The implications extend beyond medicine. The architecture supports the DFG project's broader goals in "Metal and Welding Technology." By simply swapping the fine-tuned model and system prompts, the same underlying VR framework can assess safety protocols in a workshop, replacing medical terminology with technical specifications.
+
+Future work will focus on "Adaptive Scaffolding"—allowing the AI to dynamically simplify its language in real-time if it detects the learner is struggling, thereby keeping the learner within their productive Zone of Proximal Development.

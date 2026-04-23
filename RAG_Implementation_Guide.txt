@@ -1,0 +1,91 @@
+
+RAG (Retrieval-Augmented Generation) Implementation Guide
+=========================================================
+
+1. CONCEPT: WHAT IS RAG?
+---------------------------------------------------------
+RAG stands for Retrieval-Augmented Generation. Because standard AI models (like GPT-4) do not know your specific private documents (like your specific exam guidelines, proprietary medical textbooks, or PDF manuals), RAG bridges this gap.
+
+Instead of retraining (fine-tuning) the entire model, RAG works by:
+1.  **Retrieving**: Finding the relevant pages/paragraphs from your documents that match the user's question.
+2.  **Augmenting**: Pasting those paragraphs into the prompt context invisibly.
+3.  **Generating**: Asking the AI to answer the question using ONLY the provided paragraphs.
+
+It converts your static PDFs into a "Knowledge Base" the AI can read in real-time.
+
+2. ARCHITECTURE OVERVIEW
+---------------------------------------------------------
+For your Unity/C# project, the pipeline looks like this:
+
+[ Your PDF Files ] 
+       ↓ 
+[ Pre-processing (Chunking) ] 
+       ↓ 
+[ Embeddings API (OpenAI text-embedding-3-small) ] 
+       ↓ 
+[ Vector Database (e.g., ChromaDB, Pinecone, or local FAISS) ] 
+       ↓
+[ Unity Runtime Search ]
+
+3. STEP-BY-STEP IMPLEMENTATION PLAN
+---------------------------------------------------------
+
+### Phase 1: Data Preparation (The "Indexing" Phase)
+*This is usually done in a Python script once, not inside Unity.*
+
+1.  **Extract Text**: Convert your Exam PDFs into plain text.
+    *   *Tools*: `pypdf`, `LangChain`.
+2.  **Chunking**: Break the text into small pieces (chunks) of ~500-1000 tokens. Punctuation and paragraph boundaries matter here.
+3.  **Embedding**: Send each text chunk to an Embedding Model (e.g., OpenAI `text-embedding-3-small`). 
+    *   *Input*: "The patient must be asked about allergies..."
+    *   *Output*: `[0.123, -0.542, 0.992, ...]` (A vector of numbers).
+4.  **Storage**: Save the Text Chunk + The Vector into a Vector Database.
+
+### Phase 2: Runtime Integration (In Unity)
+*This happens when the user is playing the simulation.*
+
+1.  **Search Query**: When the evaluation starts, take the student's transcript or current topic.
+2.  **Embed Query**: Send the student's text to the SAME Embedding Model used in Phase 1 to get a "Query Vector".
+3.  **Vector Search**: Send this Query Vector to your database. Ask for the "Top 3 nearest neighbors".
+    *   *Result*: The database returns the 3 most relevant chunks from your PDF.
+4.  **Generation**: Construct the final prompt for GPT-4:
+
+    ```text
+    System: You are an examiner.
+    Context: Use the following official guidelines to evaluate the student:
+    [...Inserted Chunk 1 form PDF...]
+    [...Inserted Chunk 2 form PDF...]
+    
+    User: Evaluate this student's answer: "..."
+    ```
+
+4. RECOMMENDED STACK FOR YOUR PHD PROJECT
+---------------------------------------------------------
+
+**Option A: The "Easy" Cloud Way (OpenAI Assistants API)**
+OpenAI now has RAG built-in. You don't need to build a vector DB.
+1.  Upload your PDF file to OpenAI via the API (`files.create`).
+2.  Create an Assistant with the `file_search` tool enabled.
+3.  In Unity, just use the Assistants API.
+    *   *Pros*: Zero code for chunking/embedding. Extremely fast to set up.
+    *   *Cons*: Less control over exactly what retrieved.
+
+**Option B: The "Researcher" Way (LangChain + Vector DB)**
+Better for a PhD if you want to show technical depth.
+1.  **Python Backend**: Set up a small Flask/FastAPI server.
+2.  **LangChain**: Use LangChain to handle PDF loading and splitting.
+3.  **Store**: Use Pinecone (cloud) or ChromaDB (local).
+4.  **Unity**: Unity sends a request to your Python server → Python does the RAG search → Python calls GPT-4 → returns result to Unity.
+
+5. WHY IS THIS BETTER THAN FINE-TUNING?
+---------------------------------------------------------
+*   **Facts vs. Style**: Fine-tuning (what you did with GPT-4) is great for teaching the AI *how* to speak (style, format, JSON structure). RAG is for teaching the AI *what* to know (facts, specific exam rules).
+*   **Updatability**: If the exam rules change next year, with RAG you just replace the PDF. With Fine-Tuning, you have to re-train the model ($$$).
+*   **Citations**: RAG can tell you exactly *which page* of the PDF strictly supports its evaluation score, which is crucial for academic validity.
+
+6. EXAMPLE SCENARIO FOR YOUR PROJECT
+---------------------------------------------------------
+**Scenario**: The student misses asking about a specific "Red Flag" symptom.
+*   **Without RAG**: AI might guess it's bad based on general knowledge.
+*   **With RAG**: The system retrieves page 42 of your "Exam_Guidelines_2026.pdf" which explicitly lists "Failure to ask about chest pain radiates to left arm = Automatic Fail."
+*   The AI can then output: "Score: 0/5. Reason: Violation of Guideline Section 4.2 (Cardiology Red Flags)."
