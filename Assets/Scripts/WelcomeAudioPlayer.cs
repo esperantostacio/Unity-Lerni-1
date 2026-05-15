@@ -31,12 +31,12 @@ namespace MedicalExam
         [TextArea(3, 10)]
         [Tooltip("Spoken by realtime AI when Start is clicked for D2D — then conversation begins.")]
         [SerializeField] private string doctorToDoctorWelcomeText =
-            "Hallo, Sie können mit der Fallvorstellung zum gegebenen Fall beginnen. Ich spiele Ihre ärztliche Leitung und meine Kollegin macht Notizen. Nach dem Gespräch erhalten Sie sofort Ihr Ergebnis. Die Zeit geht jetzt los. Viel Erfolg!";
+            "Hallo, Sie können mit der Fallvorstellung beginnen, sobald Sie bereit sind. Ich spiele Ihre ärztliche Leitung und meine Kollegin macht Notizen. Die Zeit startet, sobald Sie zu sprechen beginnen. Viel Erfolg!";
 
         [TextArea(3, 10)]
         [Tooltip("Spoken by realtime AI when Start is clicked for D2P — then conversation begins.")]
         [SerializeField] private string doctorToPatientWelcomeText =
-            "Hallo, Sie können mit dem Anamnesegespräch zum gegebenen Fall beginnen. Ich spiele die Patientin und meine Kollegin macht Notizen. Nach dem Gespräch erhalten Sie sofort Ihr Ergebnis. Die Zeit geht jetzt los. Viel Erfolg!";
+            "Hallo, Sie können mit dem Anamnesegespräch beginnen, sobald Sie bereit sind. Ich spiele die Patientin und meine Kollegin macht Notizen. Die Zeit startet, sobald Sie zu sprechen beginnen. Viel Erfolg!";
 
         [Header("Realtime Welcome Voice (preferred)")]
         [Tooltip("OpenAIRealtimeClient used to speak the welcome in the same voice as the conversation. If assigned, takes priority over TTS.")]
@@ -117,7 +117,9 @@ namespace MedicalExam
             _selectedD2D = true;
             if (examManager != null)
                 examManager.OnRoleSelected(MedicalExamManager.RoleType.DoctorToDoctor);
-            StartCoroutine(PlayInstructionsCoroutine(doctorToDoctorInstructionsText, GetVoice(MedicalExamManager.RoleType.DoctorToDoctor)));
+            StartCoroutine(PlayInstructionsCoroutine(
+                doctorToDoctorInstructionsText,
+                MedicalExamManager.RoleType.DoctorToDoctor));
         }
 
         /// <summary>
@@ -131,11 +133,14 @@ namespace MedicalExam
             _selectedD2D = false;
             if (examManager != null)
                 examManager.OnRoleSelected(MedicalExamManager.RoleType.DoctorToPatient);
-            StartCoroutine(PlayInstructionsCoroutine(doctorToPatientInstructionsText, GetVoice(MedicalExamManager.RoleType.DoctorToPatient)));
+            StartCoroutine(PlayInstructionsCoroutine(
+                doctorToPatientInstructionsText,
+                MedicalExamManager.RoleType.DoctorToPatient));
         }
 
-        private IEnumerator PlayInstructionsCoroutine(string text, string voice)
+        private IEnumerator PlayInstructionsCoroutine(string text, MedicalExamManager.RoleType role)
         {
+            string voice = GetVoice(role);
             if (realtimeClient != null)
             {
                 bool done = false;
@@ -144,7 +149,9 @@ namespace MedicalExam
             }
             else if (ttsPlayer != null)
             {
-                var vt = _selectedD2D ? OpenAITTSPlayer.VoiceType.DoctorToDoctor : OpenAITTSPlayer.VoiceType.DoctorToPatient;
+                var vt = role == MedicalExamManager.RoleType.DoctorToDoctor
+                    ? OpenAITTSPlayer.VoiceType.DoctorToDoctor
+                    : OpenAITTSPlayer.VoiceType.DoctorToPatient;
                 yield return StartCoroutine(ttsPlayer.SpeakAndWait(text, vt));
             }
         }

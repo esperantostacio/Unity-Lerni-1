@@ -297,20 +297,19 @@ namespace MedicalExam
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    _selectedByKey.Clear();
-                    _selectedByKeyAndScenario.Clear();
+                    // Do NOT clear existing cache — keep whatever was loaded from disk so the app still works offline.
                     _remoteLoadCompleted = true;
-                    Debug.LogError($"[RemotePromptManager] Remote prompt fetch failed: {request.error} (HTTP {request.responseCode}). strictOnlineOnly={strictOnlineOnly}. No fallback will be used.");
+                    Debug.LogError($"[RemotePromptManager] Remote prompt fetch failed: {request.error} (HTTP {request.responseCode}). " +
+                                   $"Keeping {_selectedByKey.Count} cached prompts as fallback. strictOnlineOnly={strictOnlineOnly}.");
                     yield break;
                 }
 
                 var csv = request.downloadHandler.text;
                 if (string.IsNullOrWhiteSpace(csv))
                 {
-                    _selectedByKey.Clear();
-                    _selectedByKeyAndScenario.Clear();
                     _remoteLoadCompleted = true;
-                    Debug.LogError($"[RemotePromptManager] Remote prompt CSV was empty. strictOnlineOnly={strictOnlineOnly}. No fallback will be used.");
+                    Debug.LogError($"[RemotePromptManager] Remote prompt CSV was empty. " +
+                                   $"Keeping {_selectedByKey.Count} cached prompts as fallback. strictOnlineOnly={strictOnlineOnly}.");
                     yield break;
                 }
 
@@ -320,10 +319,8 @@ namespace MedicalExam
                 if (trimmed.StartsWith("<", StringComparison.Ordinal) && (trimmed.StartsWith("<html", StringComparison.OrdinalIgnoreCase) || trimmed.StartsWith("<!doctype", StringComparison.OrdinalIgnoreCase)))
                 {
                     string preview = trimmed.Length > 260 ? trimmed.Substring(0, 260) + "..." : trimmed;
-                    _selectedByKey.Clear();
-                    _selectedByKeyAndScenario.Clear();
                     _remoteLoadCompleted = true;
-                    Debug.LogError("[RemotePromptManager] Remote URL returned HTML, not CSV. This usually means you pasted a share/view page (or a login page) instead of a direct CSV download/export URL.\n" +
+                    Debug.LogError("[RemotePromptManager] Remote URL returned HTML, not CSV. Keeping cached prompts as fallback.\n" +
                                      "Fix: use a URL that returns the CSV bytes directly (no auth prompt).\n" +
                                      "Examples:\n" +
                                      "- Google Sheets CSV export: https://docs.google.com/spreadsheets/d/<SHEET_ID>/gviz/tq?tqx=out:csv&sheet=Prompts\n" +
@@ -335,10 +332,9 @@ namespace MedicalExam
 
                 if (!TryParseCsv(csv, out var rows, out var parseError))
                 {
-                    _selectedByKey.Clear();
-                    _selectedByKeyAndScenario.Clear();
                     _remoteLoadCompleted = true;
-                    Debug.LogError($"[RemotePromptManager] Failed to parse CSV: {parseError}. strictOnlineOnly={strictOnlineOnly}. No fallback will be used.");
+                    Debug.LogError($"[RemotePromptManager] Failed to parse CSV: {parseError}. " +
+                                   $"Keeping {_selectedByKey.Count} cached prompts as fallback. strictOnlineOnly={strictOnlineOnly}.");
                     yield break;
                 }
 
@@ -352,10 +348,8 @@ namespace MedicalExam
                     string firstDataRow = (rows != null && rows.Count > 1 && rows[1] != null)
                         ? string.Join("|", rows[1])
                         : "<no data rows>";
-                    _selectedByKey.Clear();
-                    _selectedByKeyAndScenario.Clear();
                     _remoteLoadCompleted = true;
-                    Debug.LogError("[RemotePromptManager] Parsed 0 prompts from sheet. No fallback will be used. " +
+                    Debug.LogError("[RemotePromptManager] Parsed 0 prompts from sheet. Keeping cached prompts as fallback. " +
                                      $"HeaderRow='{header}' FirstDataRow='{firstDataRow}'. " +
                                      "Expected columns include: key, locale, enabled, version, text.");
                     yield break;

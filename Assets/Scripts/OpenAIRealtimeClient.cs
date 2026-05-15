@@ -35,6 +35,7 @@ public class OpenAIRealtimeClient : MonoBehaviour
         public event Action<string> OnAITranscriptCompleted;   // Fired when AI speech transcript is fully done
         public event Action OnResponseCreated; // Fired when a new AI response begins (before audio/transcript deltas)
         public event Action OnSessionUpdated; // Fired when session.updated is confirmed by the server
+        public event Action OnUserSpeechStarted; // Fired when VAD detects start of user speech
         private WebSocket _webSocket; // NativeWebSocket — works on Quest/Android/PC/Editor
         private bool _isConnecting;
         private bool _shouldReconnect;
@@ -463,6 +464,7 @@ public class OpenAIRealtimeClient : MonoBehaviour
 
                     case "input_audio_buffer.speech_started":
                         Debug.Log("[OpenAIRealtimeClient] VAD: User speech started");
+                        OnUserSpeechStarted?.Invoke();
                         break;
 
                     case "input_audio_buffer.speech_stopped":

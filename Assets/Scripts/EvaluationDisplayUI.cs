@@ -41,26 +41,57 @@ namespace MedicalExam
         [Tooltip("Parent GameObject containing the D2D (3D) result UI. Activated for DoctorToDoctor.")]
         [SerializeField] private GameObject d2dResultsPanel;
 
-        [Header("5D Score Text Fields (X/3) – D2P")]
-        [SerializeField] private TextMeshProUGUI kommunikationText;
-        [SerializeField] private TextMeshProUGUI hoerverstehenText;
-        [SerializeField] private TextMeshProUGUI gespraechsfuehrungText;
-        [SerializeField] private TextMeshProUGUI empathieText;
-        [SerializeField] private TextMeshProUGUI vollstaendigkeitText;
+        // ── D2D: 5 criteria × (category label + score value) = 10 fields ──────────────
+        [Header("D2D — Kriterium 1 (Inhalt)")]
+        [SerializeField] private TextMeshProUGUI d2dCategory1Text;
+        [SerializeField] private TextMeshProUGUI d2dScore1Text;
 
-        [Header("3D Score Text Fields – D2D")]
-        [SerializeField] private TextMeshProUGUI sprachlicheAngemessenheitText;   // X/7
-        [SerializeField] private TextMeshProUGUI inhaltlicheAngemessenheitText;   // X/3
-        [SerializeField] private TextMeshProUGUI malusPatientensicherheitText;    // X/5
-        
+        [Header("D2D — Kriterium 2 (Gesprächsfähigkeit)")]
+        [SerializeField] private TextMeshProUGUI d2dCategory2Text;
+        [SerializeField] private TextMeshProUGUI d2dScore2Text;
+
+        [Header("D2D — Kriterium 3 (Wortschatz)")]
+        [SerializeField] private TextMeshProUGUI d2dCategory3Text;
+        [SerializeField] private TextMeshProUGUI d2dScore3Text;
+
+        [Header("D2D — Kriterium 4 (Grammatik)")]
+        [SerializeField] private TextMeshProUGUI d2dCategory4Text;
+        [SerializeField] private TextMeshProUGUI d2dScore4Text;
+
+        [Header("D2D — Kriterium 5 (Aussprache)")]
+        [SerializeField] private TextMeshProUGUI d2dCategory5Text;
+        [SerializeField] private TextMeshProUGUI d2dScore5Text;
+
+        // ── D2P: 5 criteria × (category label + score value) = 10 fields ──────────────
+        [Header("D2P — Kriterium 1 (Inhalt)")]
+        [SerializeField] private TextMeshProUGUI d2pCategory1Text;
+        [SerializeField] private TextMeshProUGUI d2pScore1Text;
+
+        [Header("D2P — Kriterium 2 (Gesprächsfähigkeit)")]
+        [SerializeField] private TextMeshProUGUI d2pCategory2Text;
+        [SerializeField] private TextMeshProUGUI d2pScore2Text;
+
+        [Header("D2P — Kriterium 3 (Wortschatz)")]
+        [SerializeField] private TextMeshProUGUI d2pCategory3Text;
+        [SerializeField] private TextMeshProUGUI d2pScore3Text;
+
+        [Header("D2P — Kriterium 4 (Grammatik)")]
+        [SerializeField] private TextMeshProUGUI d2pCategory4Text;
+        [SerializeField] private TextMeshProUGUI d2pScore4Text;
+
+        [Header("D2P — Kriterium 5 (Aussprache)")]
+        [SerializeField] private TextMeshProUGUI d2pCategory5Text;
+        [SerializeField] private TextMeshProUGUI d2pScore5Text;
+
+
         [Header("Overall Feedback & Score")]
         [SerializeField] private TextMeshProUGUI feedbackText;
 
         [Header("Gesamt Score – D2P")]
-        [SerializeField] private TextMeshProUGUI totalPointsD2PText;   // X/15 or X/20 display (Doctor-to-Patient)
+        [SerializeField] private TextMeshProUGUI totalPointsD2PText;
 
         [Header("Gesamt Score – D2D")]
-        [SerializeField] private TextMeshProUGUI totalPointsD2DText;   // X/10 display (Doctor-to-Doctor)
+        [SerializeField] private TextMeshProUGUI totalPointsD2DText;
         
         [Header("Loading Indicator")]
         [SerializeField] private GameObject loadingIndicator;
@@ -430,26 +461,10 @@ namespace MedicalExam
 
          
           
-            CacheGraphic(kommunikationText);
-            CacheGraphic(hoerverstehenText);
-            CacheGraphic(gespraechsfuehrungText);
-            CacheGraphic(empathieText);
-            CacheGraphic(vollstaendigkeitText);
-            CacheGraphic(sprachlicheAngemessenheitText);
-            CacheGraphic(inhaltlicheAngemessenheitText);
-            CacheGraphic(malusPatientensicherheitText);
             CacheGraphic(totalPointsD2PText);
             CacheGraphic(totalPointsD2DText);
         }
 
-        private void RestoreInitialUiColors()
-        {
-            foreach (var kvp in _initialUiColors)
-            {
-                if (kvp.Key == null) continue;
-                kvp.Key.color = kvp.Value;
-            }
-        }
 
         private static void TryWriteTextFile(string absolutePath, string content)
         {
@@ -721,38 +736,6 @@ namespace MedicalExam
             StartCoroutine(SendTranscriptAndRealtimeFeedbackToGPTForEvaluation(conversationTranscript ?? "", realtimeAIFeedback ?? "", apiKey, scenarioName, roleType, onComplete));
         }
 
-        // Collapse *excessive* duplicated consecutive characters sometimes present in realtime feedback.
-        // IMPORTANT: do NOT collapse normal number formatting like "100" -> "10".
-        private static string CollapseConsecutiveDuplicates(string input)
-        {
-            if (string.IsNullOrEmpty(input)) return input;
-
-            var sb = new System.Text.StringBuilder(input.Length);
-            char prev = '\0';
-            int runLen = 0;
-
-            for (int i = 0; i < input.Length; i++)
-            {
-                char c = input[i];
-                if (c == prev)
-                {
-                    runLen++;
-
-                    // For digits: keep up to 2 repeats (so "100" stays "100").
-                    // For non-digits: keep up to 2 repeats as well; drop only when the run is excessive.
-                    if (runLen <= 2)
-                        sb.Append(c);
-
-                    continue;
-                }
-
-                prev = c;
-                runLen = 1;
-                sb.Append(c);
-            }
-
-            return sb.ToString();
-        }
         
         /// <summary>
         /// Sends raw feedback to ChatGPT for parsing into structured evaluation
@@ -761,35 +744,39 @@ namespace MedicalExam
         {
             Debug.Log("[EvaluationDisplayUI] 📤 Sending feedback to ChatGPT for parsing...");
             
-            string parsingPrompt = $@"You are a second-round assistance parser in a medical examination app. 
+            string parsingPrompt = $@"You are a second-round assistance parser in a medical examination app.
 
-We are sending you raw feedback from a realtime AI that evaluated a medical student's performance. The feedback contains 5 dimensions (legacy scores 0-3, newer rubric scores up to 3.99):
-- Kommunikation (communication, grammar, terminology, fluency)
-- Hörverstehen (listening comprehension, understanding)
-- Gesprächsführung (conversation management, structure)
-- Empathie (empathy, patient-centered communication)
-- Vollständigkeit (completeness, all topics covered)
-- Total Points (legacy total out of 15, newer total out of 20)
+We are sending you raw feedback from a realtime AI that evaluated a medical student's FSP (Fachsprachprüfung) performance. Both D2D and D2P evaluations use the same CEO 5-criterion grid:
+- Inhalt / content (0-3.99)
+- Gesprächsfähigkeit & Interaktion / conversation (0-3.99)
+- Ausdrucksfähigkeit / Wortschatz / vocabulary (0-3.99)
+- Grammatik / grammar (0-3.99)
+- Aussprache & Intonation / pronunciation (0-3.99)
+- Total (0-20), pass threshold 12
 - Overall feedback text
 
 RAW FEEDBACK FROM REALTIME AI:
 {rawFeedback}
 
-TASK: Parse this feedback and extract the scores. The feedback might be in German or English, and might have typos or grammar issues. Be flexible in parsing.
+TASK: Parse this feedback and extract the scores. The feedback might be in German or English. Be flexible.
 
 Return ONLY a valid JSON object with this exact format:
 {{
-    ""kommunikation"": {{""score"": [number 0-4], ""feedback"": ""...""}},
-    ""hoerverstehen"": {{""score"": [number 0-4], ""feedback"": ""...""}},
-    ""gespraechsfuehrung"": {{""score"": [number 0-4], ""feedback"": ""...""}},
-    ""empathie"": {{""score"": [number 0-4], ""feedback"": ""...""}},
-    ""vollstaendigkeit"": {{""score"": [number 0-4], ""feedback"": ""...""}},
-    ""totalPoints"": [number 0-20],
-  ""overallFeedback"": ""[the detailed feedback text, cleaned up if needed]""
+    ""criteria"": {{
+        ""content"": {{""score"": [number 0-3.99], ""feedback"": ""...""}},
+        ""conversation"": {{""score"": [number 0-3.99], ""feedback"": ""...""}},
+        ""vocabulary"": {{""score"": [number 0-3.99], ""feedback"": ""...""}},
+        ""grammar"": {{""score"": [number 0-3.99], ""feedback"": ""...""}},
+        ""pronunciation"": {{""score"": [number 0-3.99], ""feedback"": ""...""}}
+    }},
+    ""totalScore"": [number 0-20],
+    ""finalVerdict"": ""PASSED or FAILED"",
+    ""overallFeedback"": ""[the detailed feedback text]"",
+    ""strengths"": [""..."", ""...""],
+    ""areasForImprovement"": [""..."", ""...""]
 }}
 
-If any score is missing, set it to 0.
-Make sure all numbers are valid and within the specified ranges.";
+If any score is missing, set it to 0. Make sure all numbers are valid and within the specified ranges.";
 
             string url = "https://api.openai.com/v1/chat/completions";
                         string model = GetChatModelId();
@@ -847,42 +834,15 @@ Make sure all numbers are valid and within the specified ranges.";
                             yield break;
                         }
 
-                        // Parse the 5-dimensional scores (legacy 0-3 each, newer up to 3.99 each)
-                        (float komScore, string komFb) = ParseScoreAndFeedback(evalObj, "kommunikation");
-                        (float hoerScore, string hoerFb) = ParseScoreAndFeedback(evalObj, "hoerverstehen");
-                        (float gesprScore, string gesprFb) = ParseScoreAndFeedback(evalObj, "gespraechsfuehrung");
-                        (float empScore, string empFb) = ParseScoreAndFeedback(evalObj, "empathie");
-                        (float vollScore, string vollFb) = ParseScoreAndFeedback(evalObj, "vollstaendigkeit");
-                        float totalPoints = ParseFloatFieldAnyKey(evalObj, "totalPoints", "total", "gesamt");
-                        string overallFeedback = ParseStringFieldAnyKey(evalObj, "overallFeedback", "feedback", "allgemeineFeedback");
-                        float d2pTotalMax = ResolveD2PTotalMax(totalPoints, komScore, hoerScore, gesprScore, empScore, vollScore);
-                        float d2pPerSkillMax = ResolveD2PPerSkillMax(d2pTotalMax);
-                        float d2pPassThreshold = ResolveD2PPassThreshold(d2pTotalMax);
-
-                        var evaluation = new ExamEvaluation
+                        // Parse using CEO 5-criteria schema (same for D2D and D2P)
+                        ExamEvaluation evaluation;
+                        if (!TryBuildD2DEvaluation(evalObj, scenarioName, roleType, "", out evaluation))
                         {
-                            scenarioName = scenarioName,
-                            roleType = roleType,
-                            conversationTranscript = "", // Not needed for display
-                            kommunikation = Mathf.Clamp(komScore, 0f, d2pPerSkillMax),
-                            hoerverstehen = Mathf.Clamp(hoerScore, 0f, d2pPerSkillMax),
-                            gespraechsfuehrung = Mathf.Clamp(gesprScore, 0f, d2pPerSkillMax),
-                            empathie = Mathf.Clamp(empScore, 0f, d2pPerSkillMax),
-                            vollstaendigkeit = Mathf.Clamp(vollScore, 0f, d2pPerSkillMax),
-                            totalPoints = Mathf.Clamp(totalPoints, 0f, d2pTotalMax),
-                            totalPointsMax = d2pTotalMax,
-                            kommunikationFeedback = komFb,
-                            hoerverstehenFeedback = hoerFb,
-                            gespraechsfuehrungFeedback = gesprFb,
-                            empathieFeedback = empFb,
-                            vollstaendigkeitFeedback = vollFb,
-                            overallFeedback = overallFeedback,
-                            feedbackText = overallFeedback
-                        };
+                            Debug.LogError("[EvaluationDisplayUI] ❌ Could not build CEO evaluation from second-round parsed JSON.");
+                            yield break;
+                        }
 
-                        evaluation.passed = evaluation.totalPoints >= d2pPassThreshold;
-
-                        Debug.Log($"[EvaluationDisplayUI] ✓ 5D evaluation parsed from second-round parsing: K={evaluation.kommunikation}, H={evaluation.hoerverstehen}, G={evaluation.gespraechsfuehrung}, E={evaluation.empathie}, V={evaluation.vollstaendigkeit}, Total={evaluation.totalPoints}/{evaluation.totalPointsMax}, Passed={evaluation.passed}");
+                        Debug.Log($"[EvaluationDisplayUI] ✓ CEO evaluation parsed from second-round parsing: Content={evaluation.d2dContent}, Conversation={evaluation.d2dConversation}, Vocabulary={evaluation.d2dVocabulary}, Grammar={evaluation.d2dGrammar}, Pronunciation={evaluation.d2dPronunciation}, Total={evaluation.totalPoints}/{evaluation.totalPointsMax}, Passed={evaluation.passed}");
 
                         DisplayEvaluation(evaluation);
                         onComplete?.Invoke(evaluation);
@@ -1124,7 +1084,12 @@ Make sure all numbers are valid and within the specified ranges.";
                 }
                 else
                 {
-                    hasExpectedKeys = GetTokenByKey(obj, "kommunikation") != null ||
+                    // D2P now uses same CEO schema as D2D (content/conversation/vocabulary/grammar/pronunciation)
+                    hasExpectedKeys = GetTokenByKey(obj, "criteria") != null ||
+                                     GetTokenByKey(obj, "content") != null ||
+                                     GetTokenByKey(obj, "finalVerdict") != null ||
+                                     GetTokenByKey(obj, "totalScore") != null ||
+                                     GetTokenByKey(obj, "kommunikation") != null ||
                                      GetTokenByKey(obj, "hoerverstehen") != null ||
                                      GetTokenByKey(obj, "totalPoints") != null;
                 }
@@ -1184,49 +1149,49 @@ Make sure all numbers are valid and within the specified ranges.";
                     }
                     else
                     {
-                        // Parse 5D evaluation scores (legacy 0-3 each, newer up to 3.99 each) for D2P
-                        (float komScore, string komFb) = ParseScoreAndFeedback(obj, "kommunikation");
-                        (float hoerScore, string hoerFb) = ParseScoreAndFeedback(obj, "hoerverstehen");
-                        (float gesprScore, string gesprFb) = ParseScoreAndFeedback(obj, "gespraechsfuehrung");
-                        (float empScore, string empFb) = ParseScoreAndFeedback(obj, "empathie");
-                        (float vollScore, string vollFb) = ParseScoreAndFeedback(obj, "vollstaendigkeit");
-                        
-                        // Parse totalPoints (legacy 0-15, newer 0-20) and overall feedback
-                        float totalPoints = ParseFloatFieldAnyKey(obj, "totalPoints", "total", "gesamt", "gesamtpunkte");
-                        string overallFeedback = ParseStringFieldAnyKey(obj, "overallFeedback", "generalFeedback", "feedbackText", "feedback", "gesamtfeedback");
-                        float d2pTotalMax = ResolveD2PTotalMax(totalPoints, komScore, hoerScore, gesprScore, empScore, vollScore);
-                        float d2pPerSkillMax = ResolveD2PPerSkillMax(d2pTotalMax);
-                        float d2pPassThreshold = ResolveD2PPassThreshold(d2pTotalMax);
-
-                        evaluation = new ExamEvaluation
+                        // Try CEO 5-criteria schema first (content/conversation/vocabulary/grammar/pronunciation)
+                        if (TryBuildD2DEvaluation(obj, scenarioName, roleType, conversationTranscript, out evaluation) && evaluation.usesD2DFiveCriteria)
                         {
-                            scenarioName = scenarioName,
-                            roleType = roleType,
-                            conversationTranscript = conversationTranscript,
-                            // 5D scores (legacy max 3, newer max 4)
-                            kommunikation = Mathf.Clamp(komScore, 0f, d2pPerSkillMax),
-                            hoerverstehen = Mathf.Clamp(hoerScore, 0f, d2pPerSkillMax),
-                            gespraechsfuehrung = Mathf.Clamp(gesprScore, 0f, d2pPerSkillMax),
-                            empathie = Mathf.Clamp(empScore, 0f, d2pPerSkillMax),
-                            vollstaendigkeit = Mathf.Clamp(vollScore, 0f, d2pPerSkillMax),
-                            // 5D feedback
-                            kommunikationFeedback = komFb,
-                            hoerverstehenFeedback = hoerFb,
-                            gespraechsfuehrungFeedback = gesprFb,
-                            empathieFeedback = empFb,
-                            vollstaendigkeitFeedback = vollFb,
-                            // Total and overall
-                            totalPoints = Mathf.Clamp(totalPoints, 0f, d2pTotalMax),
-                            totalPointsMax = d2pTotalMax,
-                            overallFeedback = overallFeedback,
-                            feedbackText = overallFeedback
-                        };
+                            Debug.Log($"[EvaluationDisplayUI] D2P CEO evaluation parsed. Content={evaluation.d2dContent}, Conversation={evaluation.d2dConversation}, Vocabulary={evaluation.d2dVocabulary}, Grammar={evaluation.d2dGrammar}, Pronunciation={evaluation.d2dPronunciation}, Total={evaluation.totalPoints}/{evaluation.totalPointsMax}, Passed={evaluation.passed}");
+                        }
+                        else
+                        {
+                            // Legacy 5D fallback (kommunikation / hoerverstehen / etc.)
+                            (float komScore, string komFb) = ParseScoreAndFeedback(obj, "kommunikation");
+                            (float hoerScore, string hoerFb) = ParseScoreAndFeedback(obj, "hoerverstehen");
+                            (float gesprScore, string gesprFb) = ParseScoreAndFeedback(obj, "gespraechsfuehrung");
+                            (float empScore, string empFb) = ParseScoreAndFeedback(obj, "empathie");
+                            (float vollScore, string vollFb) = ParseScoreAndFeedback(obj, "vollstaendigkeit");
+                            float totalPoints = ParseFloatFieldAnyKey(obj, "totalPoints", "total", "gesamt", "gesamtpunkte");
+                            string overallFeedback = ParseStringFieldAnyKey(obj, "overallFeedback", "generalFeedback", "feedbackText", "feedback", "gesamtfeedback");
+                            float d2pTotalMax = ResolveD2PTotalMax(totalPoints, komScore, hoerScore, gesprScore, empScore, vollScore);
+                            float d2pPerSkillMax = ResolveD2PPerSkillMax(d2pTotalMax);
+                            float d2pPassThreshold = ResolveD2PPassThreshold(d2pTotalMax);
 
-                        // Determine pass/fail based on detected scale (legacy >=9/15, newer >=12/20)
-                        evaluation.passed = evaluation.totalPoints >= d2pPassThreshold;
-                        ApplyD2PConservativeScoringGuards(evaluation);
-
-                        Debug.Log($"[EvaluationDisplayUI] 5D evaluation parsed. K={evaluation.kommunikation}, H={evaluation.hoerverstehen}, G={evaluation.gespraechsfuehrung}, E={evaluation.empathie}, V={evaluation.vollstaendigkeit}, Total={evaluation.totalPoints}/{evaluation.totalPointsMax}, Passed={evaluation.passed}");
+                            evaluation = new ExamEvaluation
+                            {
+                                scenarioName = scenarioName,
+                                roleType = roleType,
+                                conversationTranscript = conversationTranscript,
+                                kommunikation = Mathf.Clamp(komScore, 0f, d2pPerSkillMax),
+                                hoerverstehen = Mathf.Clamp(hoerScore, 0f, d2pPerSkillMax),
+                                gespraechsfuehrung = Mathf.Clamp(gesprScore, 0f, d2pPerSkillMax),
+                                empathie = Mathf.Clamp(empScore, 0f, d2pPerSkillMax),
+                                vollstaendigkeit = Mathf.Clamp(vollScore, 0f, d2pPerSkillMax),
+                                kommunikationFeedback = komFb,
+                                hoerverstehenFeedback = hoerFb,
+                                gespraechsfuehrungFeedback = gesprFb,
+                                empathieFeedback = empFb,
+                                vollstaendigkeitFeedback = vollFb,
+                                totalPoints = Mathf.Clamp(totalPoints, 0f, d2pTotalMax),
+                                totalPointsMax = d2pTotalMax,
+                                overallFeedback = overallFeedback,
+                                feedbackText = overallFeedback
+                            };
+                            evaluation.passed = evaluation.totalPoints >= d2pPassThreshold;
+                            ApplyD2PConservativeScoringGuards(evaluation);
+                            Debug.Log($"[EvaluationDisplayUI] D2P legacy 5D parsed. K={evaluation.kommunikation}, H={evaluation.hoerverstehen}, G={evaluation.gespraechsfuehrung}, E={evaluation.empathie}, V={evaluation.vollstaendigkeit}, Total={evaluation.totalPoints}/{evaluation.totalPointsMax}, Passed={evaluation.passed}");
+                        }
                     }
 
                     DisplayEvaluation(evaluation);
@@ -1690,31 +1655,6 @@ Make sure all numbers are valid and within the specified ranges.";
             }
         }
 
-        private static float ParseFloatField(JObject obj, string key)
-        {
-            if (obj == null || string.IsNullOrWhiteSpace(key)) return 0f;
-
-            var token = obj[key];
-            if (token == null) return 0f;
-
-            if (token.Type == JTokenType.Float || token.Type == JTokenType.Integer)
-            {
-                return token.Value<float>();
-            }
-
-            // Handle values like "4/5" or "3,5" or "4.0".
-            var s = token.ToString().Trim();
-            if (string.IsNullOrEmpty(s)) return 0f;
-
-            // If formatted like "4/5" take the numerator.
-            var slashIdx = s.IndexOf('/');
-            if (slashIdx > 0) s = s.Substring(0, slashIdx);
-
-            // Normalize decimal comma.
-            s = s.Replace(',', '.');
-
-            return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 0f;
-        }
         
         /// <summary>
         /// Displays an evaluation result with sliders and scores (with smooth animations)
@@ -1744,134 +1684,50 @@ Make sure all numbers are valid and within the specified ranges.";
             {
                 if (evaluation.usesD2DFiveCriteria)
                 {
-                    if (sprachlicheAngemessenheitText != null)
-                        sprachlicheAngemessenheitText.text = $"Inhalt {evaluation.d2dContent:F2} / 3.99";
+                    // ── Generic paired fields (primary) ──
+                    if (d2dCategory1Text != null) d2dCategory1Text.text = "Inhalt";
+                    if (d2dScore1Text    != null) d2dScore1Text.text    = $"{evaluation.d2dContent:F2} / 3.99";
 
-                    if (inhaltlicheAngemessenheitText != null)
-                        inhaltlicheAngemessenheitText.text = $"Interaktion {evaluation.d2dConversation:F2} / 3.99";
+                    if (d2dCategory2Text != null) d2dCategory2Text.text = "Gesprächsfähigkeit";
+                    if (d2dScore2Text    != null) d2dScore2Text.text    = $"{evaluation.d2dConversation:F2} / 3.99";
 
-                    if (malusPatientensicherheitText != null)
-                    {
-                        malusPatientensicherheitText.text = $"Wortschatz {evaluation.d2dVocabulary:F2} / 3.99";
-                        if (sprachlicheAngemessenheitText != null)
-                            malusPatientensicherheitText.color = sprachlicheAngemessenheitText.color;
-                    }
+                    if (d2dCategory3Text != null) d2dCategory3Text.text = "Wortschatz";
+                    if (d2dScore3Text    != null) d2dScore3Text.text    = $"{evaluation.d2dVocabulary:F2} / 3.99";
 
-                    if (sprachlicheAngemessenheitScoreText != null)
-                        sprachlicheAngemessenheitScoreText.text = $"Inhalt {evaluation.d2dContent:F2} / 3.99";
+                    if (d2dCategory4Text != null) d2dCategory4Text.text = "Grammatik";
+                    if (d2dScore4Text    != null) d2dScore4Text.text    = $"{evaluation.d2dGrammar:F2} / 3.99";
 
-                    if (inhaltlicheAngemessenheitScoreText != null)
-                        inhaltlicheAngemessenheitScoreText.text = $"Interaktion {evaluation.d2dConversation:F2} / 3.99";
+                    if (d2dCategory5Text != null) d2dCategory5Text.text = "Aussprache";
+                    if (d2dScore5Text    != null) d2dScore5Text.text    = $"{evaluation.d2dPronunciation:F2} / 3.99";
 
-                    if (malusPatientensicherheitScoreText != null)
-                    {
-                        malusPatientensicherheitScoreText.text = $"Wortschatz {evaluation.d2dVocabulary:F2} / 3.99";
-                        if (sprachlicheAngemessenheitScoreText != null)
-                            malusPatientensicherheitScoreText.color = sprachlicheAngemessenheitScoreText.color;
-                    }
-
-                    if (d2dFinalScoreText != null)
-                        d2dFinalScoreText.text = $"{evaluation.totalPoints:F1} / 20";
-
-                    if (totalPointsD2DText != null)
-                        totalPointsD2DText.text = $"{evaluation.totalPoints:F1} / 20";
-
-                    if (feedbackText != null)
-                        feedbackText.text = StripEmojis(string.IsNullOrWhiteSpace(evaluation.feedbackText) ? BuildD2DFiveCriteriaFeedback(evaluation) : evaluation.feedbackText);
-
+                    StartCoroutine(DisplayFeedbackDelayed(evaluation, 1.5f));
                     Debug.Log($"[EvaluationDisplayUI] Displayed D2D CEO evaluation: Total={evaluation.totalPoints}/20, Passed: {evaluation.passed}");
-                }
-                else
-                {
-                    // ---- D2D 3D display ----
-                    if (sprachlicheAngemessenheitText != null)
-                        sprachlicheAngemessenheitText.text = $"{evaluation.sprachlicheAngemessenheit:F1} / 7";
-
-                    if (inhaltlicheAngemessenheitText != null)
-                        inhaltlicheAngemessenheitText.text = $"{evaluation.inhaltlicheAngemessenheit:F1} / 3";
-
-                    if (malusPatientensicherheitText != null)
-                    {
-                        malusPatientensicherheitText.text = $"-{evaluation.malusPatientensicherheit:F1} / 5";
-                        ColorUtility.TryParseHtmlString(evaluation.malusPatientensicherheit > 0f ? "#F45356" : "#38AC65", out var malusColor);
-                        malusPatientensicherheitText.color = malusColor;
-                    }
-
-                    if (d2dFinalScoreText != null)
-                        d2dFinalScoreText.text = $"{evaluation.gesamtD2D:F1} / 10";
-
-                    if (totalPointsD2DText != null)
-                        totalPointsD2DText.text = $"{evaluation.gesamtD2D:F1} / 10";
-
-                    if (feedbackText != null)
-                    {
-                        string overall = evaluation.overallFeedback ?? evaluation.feedbackText ?? "";
-                        string detailedFeedback = "";
-
-                        if (!string.IsNullOrWhiteSpace(evaluation.sprachlicheAngemessenheitFeedback))
-                            detailedFeedback += $"\n\nSprachliche Angemessenheit: {evaluation.sprachlicheAngemessenheitFeedback}";
-                        if (!string.IsNullOrWhiteSpace(evaluation.inhaltlicheAngemessenheitFeedback))
-                            detailedFeedback += $"\n\nInhaltliche Angemessenheit: {evaluation.inhaltlicheAngemessenheitFeedback}";
-                        if (!string.IsNullOrWhiteSpace(evaluation.malusPatientensicherheitFeedback))
-                            detailedFeedback += $"\n\nMalus Patientensicherheit: {evaluation.malusPatientensicherheitFeedback}";
-
-                        feedbackText.text = StripEmojis(overall + detailedFeedback);
-                    }
-
-                    Debug.Log($"[EvaluationDisplayUI] Displayed D2D 3D evaluation: Sprache={evaluation.sprachlicheAngemessenheit}/7, Inhalt={evaluation.inhaltlicheAngemessenheit}/3, Malus={evaluation.malusPatientensicherheit}/5, Gesamt={evaluation.gesamtD2D}/10, Passed: {evaluation.passed}");
                 }
             }
             else
             {
-                // ---- D2P 5D display ----
-                float d2pTotalMax = evaluation.totalPointsMax > 0f ? evaluation.totalPointsMax : (evaluation.totalPoints > 15f ? 20f : 15f);
-                float d2pPerSkillMax = ResolveD2PPerSkillMax(d2pTotalMax);
-                int d2pPerSkillMaxInt = Mathf.RoundToInt(d2pPerSkillMax);
-                int d2pTotalMaxInt = Mathf.RoundToInt(d2pTotalMax);
-
-                if (kommunikationScoreText != null)
-                    kommunikationScoreText.text = $"{Mathf.RoundToInt(evaluation.kommunikation)} / {d2pPerSkillMaxInt}";
-                
-                if (hoerverstehenScoreText != null)
-                    hoerverstehenScoreText.text = $"{Mathf.RoundToInt(evaluation.hoerverstehen)} / {d2pPerSkillMaxInt}";
-                
-                if (gespraechsfuehrungScoreText != null)
-                    gespraechsfuehrungScoreText.text = $"{Mathf.RoundToInt(evaluation.gespraechsfuehrung)} / {d2pPerSkillMaxInt}";
-                
-                if (empathieScoreText != null)
-                    empathieScoreText.text = $"{Mathf.RoundToInt(evaluation.empathie)} / {d2pPerSkillMaxInt}";
-                
-                if (vollstaendigkeitScoreText != null)
-                    vollstaendigkeitScoreText.text = $"{Mathf.RoundToInt(evaluation.vollstaendigkeit)} / {d2pPerSkillMaxInt}";
-                
-                // Display total score (legacy /15, newer /20)
-                if (d2pFinalScoreText != null)
-                    d2pFinalScoreText.text = $"{Mathf.RoundToInt(evaluation.totalPoints)} / {d2pTotalMaxInt}";
-                
-                if (totalPointsD2PText != null)
-                    totalPointsD2PText.text = $"{Mathf.RoundToInt(evaluation.totalPoints)} / {d2pTotalMaxInt}";
-
-                // Display general feedback (combine overall + per-dimension feedback)
-                if (feedbackText != null)
+                // ---- D2P display (CEO 5-criteria or legacy 5D fallback) ----
+                if (evaluation.usesD2DFiveCriteria)
                 {
-                    string overall = evaluation.overallFeedback ?? evaluation.feedbackText ?? "";
-                    string detailedFeedback = "";
-                    
-                    if (!string.IsNullOrWhiteSpace(evaluation.kommunikationFeedback))
-                        detailedFeedback += $"\n\nKommunikation: {evaluation.kommunikationFeedback}";
-                    if (!string.IsNullOrWhiteSpace(evaluation.hoerverstehenFeedback))
-                        detailedFeedback += $"\n\nHörverstehen: {evaluation.hoerverstehenFeedback}";
-                    if (!string.IsNullOrWhiteSpace(evaluation.gespraechsfuehrungFeedback))
-                        detailedFeedback += $"\n\nGesprächsführung: {evaluation.gespraechsfuehrungFeedback}";
-                    if (!string.IsNullOrWhiteSpace(evaluation.empathieFeedback))
-                        detailedFeedback += $"\n\nEmpathie: {evaluation.empathieFeedback}";
-                    if (!string.IsNullOrWhiteSpace(evaluation.vollstaendigkeitFeedback))
-                        detailedFeedback += $"\n\nVollständigkeit: {evaluation.vollstaendigkeitFeedback}";
-                    
-                    feedbackText.text = StripEmojis(overall + detailedFeedback);
+                    // ── Generic paired fields (primary) ──
+                    if (d2pCategory1Text != null) d2pCategory1Text.text = "Inhalt";
+                    if (d2pScore1Text    != null) d2pScore1Text.text    = $"{evaluation.d2dContent:F2} / 3.99";
+
+                    if (d2pCategory2Text != null) d2pCategory2Text.text = "Gesprächsfähigkeit";
+                    if (d2pScore2Text    != null) d2pScore2Text.text    = $"{evaluation.d2dConversation:F2} / 3.99";
+
+                    if (d2pCategory3Text != null) d2pCategory3Text.text = "Wortschatz";
+                    if (d2pScore3Text    != null) d2pScore3Text.text    = $"{evaluation.d2dVocabulary:F2} / 3.99";
+
+                    if (d2pCategory4Text != null) d2pCategory4Text.text = "Grammatik";
+                    if (d2pScore4Text    != null) d2pScore4Text.text    = $"{evaluation.d2dGrammar:F2} / 3.99";
+
+                    if (d2pCategory5Text != null) d2pCategory5Text.text = "Aussprache";
+                    if (d2pScore5Text    != null) d2pScore5Text.text    = $"{evaluation.d2dPronunciation:F2} / 3.99";
+
+                    StartCoroutine(DisplayFeedbackDelayed(evaluation, 1.5f));
+                    Debug.Log($"[EvaluationDisplayUI] Displayed D2P CEO evaluation: Total={evaluation.totalPoints}/20, Passed: {evaluation.passed}");
                 }
-                
-                Debug.Log($"[EvaluationDisplayUI] Displayed 5D evaluation: {evaluation.totalPoints}/{d2pTotalMax}, Passed: {evaluation.passed}");
             }
 
             // Display pass/fail status (shared between D2D and D2P)
@@ -1895,38 +1751,13 @@ Make sure all numbers are valid and within the specified ranges.";
         /// <summary>
         /// Internal coroutine that displays evaluation UI after a delay
         /// </summary>
-      
-
-
-        private void Set5DUiActive(bool active)
-        {
-           
-            if (kommunikationText != null) kommunikationText.gameObject.SetActive(active);
-            if (hoerverstehenText != null) hoerverstehenText.gameObject.SetActive(active);
-            if (gespraechsfuehrungText != null) gespraechsfuehrungText.gameObject.SetActive(active);
-            if (empathieText != null) empathieText.gameObject.SetActive(active);
-            if (vollstaendigkeitText != null) vollstaendigkeitText.gameObject.SetActive(active);
-        }
-        
-        /// <summary>
-        /// Animates a score from 0 to target value smoothly
-        /// </summary>
-        // AnimateScoreDisplay removed - legacy method for slider-based UI (no longer used)
-        
-        
-        /// <summary>
-        /// Display feedback text with animation
-        /// </summary>
         private IEnumerator DisplayFeedbackDelayed(ExamEvaluation evaluation, float delay)
         {
             yield return new WaitForSeconds(delay);
-            
+
             if (feedbackText != null)
             {
-                // Show overall feedback
                 string overall = !string.IsNullOrWhiteSpace(evaluation.overallFeedback) ? evaluation.overallFeedback : evaluation.feedbackText;
-
-                // Include per-dimension feedback (D2D or D2P)
                 bool isD2D = evaluation.roleType == ExamEvaluation.RoleType.DoctorToDoctor;
                 string perDimension = "";
 
@@ -1937,8 +1768,8 @@ Make sure all numbers are valid and within the specified ranges.";
                         perDimension = "\n\n---\n" + BuildD2DFiveCriteriaFeedback(evaluation);
                     }
                     else if (!string.IsNullOrWhiteSpace(evaluation.sprachlicheAngemessenheitFeedback) ||
-                        !string.IsNullOrWhiteSpace(evaluation.inhaltlicheAngemessenheitFeedback) ||
-                        !string.IsNullOrWhiteSpace(evaluation.malusPatientensicherheitFeedback))
+                             !string.IsNullOrWhiteSpace(evaluation.inhaltlicheAngemessenheitFeedback) ||
+                             !string.IsNullOrWhiteSpace(evaluation.malusPatientensicherheitFeedback))
                     {
                         perDimension = "\n\n---\n";
                         if (!string.IsNullOrWhiteSpace(evaluation.sprachlicheAngemessenheitFeedback))
@@ -1951,11 +1782,15 @@ Make sure all numbers are valid and within the specified ranges.";
                 }
                 else
                 {
-                    if (!string.IsNullOrWhiteSpace(evaluation.kommunikationFeedback) ||
-                        !string.IsNullOrWhiteSpace(evaluation.hoerverstehenFeedback) ||
-                        !string.IsNullOrWhiteSpace(evaluation.gespraechsfuehrungFeedback) ||
-                        !string.IsNullOrWhiteSpace(evaluation.empathieFeedback) ||
-                        !string.IsNullOrWhiteSpace(evaluation.vollstaendigkeitFeedback))
+                    if (evaluation.usesD2DFiveCriteria)
+                    {
+                        perDimension = "\n\n---\n" + BuildD2DFiveCriteriaFeedback(evaluation);
+                    }
+                    else if (!string.IsNullOrWhiteSpace(evaluation.kommunikationFeedback) ||
+                             !string.IsNullOrWhiteSpace(evaluation.hoerverstehenFeedback) ||
+                             !string.IsNullOrWhiteSpace(evaluation.gespraechsfuehrungFeedback) ||
+                             !string.IsNullOrWhiteSpace(evaluation.empathieFeedback) ||
+                             !string.IsNullOrWhiteSpace(evaluation.vollstaendigkeitFeedback))
                     {
                         perDimension = "\n\n---\n";
                         if (!string.IsNullOrWhiteSpace(evaluation.kommunikationFeedback))
@@ -1977,8 +1812,7 @@ Make sure all numbers are valid and within the specified ranges.";
 
                 feedbackText.text = body;
             }
-            
-            // Display totalPoints – separate fields for D2P and D2D
+
             bool isD2DDelayed = evaluation.roleType == ExamEvaluation.RoleType.DoctorToDoctor;
             if (isD2DDelayed)
             {
@@ -1986,11 +1820,10 @@ Make sure all numbers are valid and within the specified ranges.";
                 {
                     if (colorCodeScores)
                         totalPointsD2DText.color = evaluation.passed ? Color.green : Color.red;
-                    totalPointsD2DText.text = evaluation.usesD2DFiveCriteria ? $"{evaluation.totalPoints:F1}/20" : $"{evaluation.gesamtD2D:F1}/10";
+                    totalPointsD2DText.text = evaluation.usesD2DFiveCriteria
+                        ? $"{evaluation.totalPoints:F1} / 20"
+                        : $"{evaluation.gesamtD2D:F1} / 10";
                 }
-                if (d2dFinalScoreText != null)
-                    d2dFinalScoreText.text = evaluation.usesD2DFiveCriteria ? $"{evaluation.totalPoints:F1}/20" : $"{evaluation.gesamtD2D:F1}/10";
-                Debug.Log($"[EvaluationDisplayUI] Displaying D2D gesamt: {(evaluation.usesD2DFiveCriteria ? evaluation.totalPoints : evaluation.gesamtD2D):F1}/{(evaluation.usesD2DFiveCriteria ? 20 : 10)}, Passed: {evaluation.passed}");
             }
             else
             {
@@ -2000,13 +1833,19 @@ Make sure all numbers are valid and within the specified ranges.";
                 {
                     if (colorCodeScores)
                         totalPointsD2PText.color = evaluation.passed ? Color.green : Color.red;
-                    totalPointsD2PText.text = $"{evaluation.totalPoints:F0}/{d2pTotalMaxInt}";
+                    totalPointsD2PText.text = evaluation.usesD2DFiveCriteria
+                        ? $"{evaluation.totalPoints:F1} / 20"
+                        : $"{evaluation.totalPoints:F0} / {d2pTotalMaxInt}";
                 }
-                if (d2pFinalScoreText != null)
-                    d2pFinalScoreText.text = $"{evaluation.totalPoints:F0}/{d2pTotalMaxInt}";
-                Debug.Log($"[EvaluationDisplayUI] Displaying D2P totalPoints: {evaluation.totalPoints:F0}/{d2pTotalMaxInt}, Passed: {evaluation.passed}");
             }
         }
+
+        /// <summary>
+        /// Animates a score from 0 to target value smoothly
+        /// </summary>
+        // AnimateScoreDisplay removed - legacy method for slider-based UI (no longer used)
+        
+        
         
         /// <summary>
         /// Animate overall score number from 0 to target
@@ -2079,117 +1918,8 @@ Make sure all numbers are valid and within the specified ranges.";
             }
         }
 
-        [Header("Alternative UI (Compact View)")]
-        [SerializeField] private TextMeshProUGUI resultStatusText;   // Shows "Bestanden" (green) or "nicht Bestanden" (red)
-        
-        [Header("Individual Score Text Fields (5D) – D2P")]
-        [SerializeField] private TextMeshProUGUI kommunikationScoreText;        // "X/3" or "X/4" format
-        [SerializeField] private TextMeshProUGUI hoerverstehenScoreText;       // "X/3" or "X/4" format
-        [SerializeField] private TextMeshProUGUI gespraechsfuehrungScoreText;   // "X/3" or "X/4" format
-        [SerializeField] private TextMeshProUGUI empathieScoreText;            // "X/3" or "X/4" format
-        [SerializeField] private TextMeshProUGUI vollstaendigkeitScoreText;    // "X/3" or "X/4" format
-        [SerializeField] private TextMeshProUGUI d2pFinalScoreText;              // "X/15" or "X/20" format (D2P Gesamt)
-
-        [Header("Individual Score Text Fields (3D) – D2D")]
-        [SerializeField] private TextMeshProUGUI sprachlicheAngemessenheitScoreText;   // "X/7" format
-        [SerializeField] private TextMeshProUGUI inhaltlicheAngemessenheitScoreText;   // "X/3" format
-        [SerializeField] private TextMeshProUGUI malusPatientensicherheitScoreText;    // "X/5" format
-        [SerializeField] private TextMeshProUGUI d2dFinalScoreText;                    // "X/10" format (D2D Gesamt)
-
-        /// <summary>
-        /// Update the compact alternative UI with scores and pass/fail status (D2P 5D version)
-        /// </summary>
-        public void UpdateAlternativeUI(float kommunikation, float hoerverstehen, float gespraechsfuehrung, float empathie, float vollstaendigkeit, bool passed)
-        {
-            // Show D2P panel, hide D2D panel
-            if (d2pResultsPanel != null) d2pResultsPanel.SetActive(true);
-            if (d2dResultsPanel != null) d2dResultsPanel.SetActive(false);
-
-            float d2pTotalMax = ResolveD2PTotalMax(kommunikation + hoerverstehen + gespraechsfuehrung + empathie + vollstaendigkeit, kommunikation, hoerverstehen, gespraechsfuehrung, empathie, vollstaendigkeit);
-            int d2pPerSkillMaxInt = Mathf.RoundToInt(ResolveD2PPerSkillMax(d2pTotalMax));
-            int d2pTotalMaxInt = Mathf.RoundToInt(d2pTotalMax);
-
-            // Individual score text fields (5D)
-            if (kommunikationScoreText != null)
-                kommunikationScoreText.text = $"{Mathf.RoundToInt(kommunikation)} / {d2pPerSkillMaxInt}";
-            
-            if (hoerverstehenScoreText != null)
-                hoerverstehenScoreText.text = $"{Mathf.RoundToInt(hoerverstehen)} / {d2pPerSkillMaxInt}";
-            
-            if (gespraechsfuehrungScoreText != null)
-                gespraechsfuehrungScoreText.text = $"{Mathf.RoundToInt(gespraechsfuehrung)} / {d2pPerSkillMaxInt}";
-            
-            if (empathieScoreText != null)
-                empathieScoreText.text = $"{Mathf.RoundToInt(empathie)} / {d2pPerSkillMaxInt}";
-            
-            if (vollstaendigkeitScoreText != null)
-                vollstaendigkeitScoreText.text = $"{Mathf.RoundToInt(vollstaendigkeit)} / {d2pPerSkillMaxInt}";
-            
-            // Final score (legacy /15, newer /20)
-            if (d2pFinalScoreText != null)
-            {
-                float totalScore = Mathf.RoundToInt(kommunikation + hoerverstehen + gespraechsfuehrung + empathie + vollstaendigkeit);
-                d2pFinalScoreText.text = $"{totalScore} / {d2pTotalMaxInt}";
-            }
-
-            if (resultStatusText != null)
-            {
-                if (passed)
-                {
-                    resultStatusText.text = "Bestanden";
-                    ColorUtility.TryParseHtmlString("#38AC65", out var passedColor2);
-                    resultStatusText.color = passedColor2;
-                }
-                else
-                {
-                    resultStatusText.text = "nicht Bestanden";
-                    ColorUtility.TryParseHtmlString("#F45356", out var failedColor2);
-                    resultStatusText.color = failedColor2;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Update the compact alternative UI with D2D 3D scores and pass/fail status
-        /// </summary>
-        public void UpdateAlternativeUI_D2D(float sprachliche, float inhaltliche, float malus, float gesamt, bool passed)
-        {
-            // Show D2D panel, hide D2P panel
-            if (d2pResultsPanel != null) d2pResultsPanel.SetActive(false);
-            if (d2dResultsPanel != null) d2dResultsPanel.SetActive(true);
-
-            if (sprachlicheAngemessenheitScoreText != null)
-                sprachlicheAngemessenheitScoreText.text = $"{sprachliche:F1} / 7";
-
-            if (inhaltlicheAngemessenheitScoreText != null)
-                inhaltlicheAngemessenheitScoreText.text = $"{inhaltliche:F1} / 3";
-
-            if (malusPatientensicherheitScoreText != null)
-            {
-                malusPatientensicherheitScoreText.text = $"-{malus:F1} / 5";
-                ColorUtility.TryParseHtmlString(malus > 0f ? "#F45356" : "#38AC65", out var malusColor);
-                malusPatientensicherheitScoreText.color = malusColor;
-            }
-
-            if (d2dFinalScoreText != null)
-                d2dFinalScoreText.text = $"{gesamt:F1} / 10";
-
-            if (resultStatusText != null)
-            {
-                if (passed)
-                {
-                    resultStatusText.text = "Bestanden";
-                    ColorUtility.TryParseHtmlString("#38AC65", out var passedColor2);
-                    resultStatusText.color = passedColor2;
-                }
-                else
-                {
-                    resultStatusText.text = "nicht Bestanden";
-                    ColorUtility.TryParseHtmlString("#F45356", out var failedColor2);
-                    resultStatusText.color = failedColor2;
-                }
-            }
-        }
+        [Header("Pass / Fail Status")]
+        [SerializeField] private TextMeshProUGUI resultStatusText;
 
         private void Start()
         {

@@ -468,8 +468,8 @@ namespace MedicalExam
 
                 SetStartConversationUiState(showStart: false, showLoading: false);
                 if (startConversationLoadingIndicator != null) startConversationLoadingIndicator.SetActive(false);
-                if (aiTalkingIndicator != null) aiTalkingIndicator.SetActive(false);
-                if (recordingIndicator != null) recordingIndicator.SetActive(true);
+                HideIndicatorSmooth(aiTalkingIndicator, aiTalkingIndicatorCanvasGroup, ref _talkingIndicatorFadeCoroutine);
+                ShowIndicatorSmooth(recordingIndicator, recordingIndicatorCanvasGroup, ref _recordingIndicatorFadeCoroutine);
 
                 try { StartCoroutine(FlushPendingUserUtterances()); } catch { }
                 return;
@@ -571,6 +571,18 @@ namespace MedicalExam
         [SerializeField] private GameObject startConversationIndicator;
         [Tooltip("Shown after pressing Start Conversation; hidden when the AI starts speaking.")]
         [SerializeField] private GameObject startConversationLoadingIndicator;
+
+        [Header("Smooth Indicator Transitions")]
+        [Tooltip("Optional CanvasGroup on the AI Talking indicator — enables fade-in/out and pulse instead of snap.")]
+        [SerializeField] private CanvasGroup aiTalkingIndicatorCanvasGroup;
+        [Tooltip("Optional CanvasGroup on the Recording indicator — enables smooth fade transitions.")]
+        [SerializeField] private CanvasGroup recordingIndicatorCanvasGroup;
+        [Tooltip("Seconds for talking/recording indicator to fade in or out.")]
+        [SerializeField] private float indicatorFadeDuration = 0.25f;
+        [Tooltip("Pulse min alpha for the AI talking indicator while AI is speaking (0.4 = gentle pulse).")]
+        [Range(0.3f, 1f)] [SerializeField] private float talkingIndicatorPulseMin = 0.45f;
+        [Tooltip("Pulse speed multiplier for the AI talking indicator.")]
+        [Range(0.5f, 4f)] [SerializeField] private float talkingIndicatorPulseSpeed = 2.0f;
 
         [Header("Start Conversation Gating")]
         [Tooltip("Deprecated: Start Conversation is always allowed after selecting a role.")]
@@ -1038,6 +1050,9 @@ namespace MedicalExam
         private bool _userSpokeSinceLastAiUiTurn = true;
         private Coroutine _aiTranscriptStreamingCoroutine;
         private Coroutine _aiTranscriptFadeCoroutine;
+        private Coroutine _talkingIndicatorPulseCoroutine;
+        private Coroutine _talkingIndicatorFadeCoroutine;
+        private Coroutine _recordingIndicatorFadeCoroutine;
         private readonly System.Collections.Generic.Queue<string> _aiWordQueue = new System.Collections.Generic.Queue<string>(256);
         private string _aiDisplayedTurnText = "";
         private string _aiWordRemainder = "";
@@ -1484,25 +1499,16 @@ namespace MedicalExam
         {
             _realtimeSessionReady = true;
 
-            // For Doctor→Patient, the agent should NOT speak first.
-            // As soon as realtime is ready and mic streaming is enabled, we should show "recording" (waiting for user).
             if (!_examActive || !_conversationStarted || _evaluationRequested)
                 return;
 
-            if (selectedRole != RoleType.DoctorToPatient)
-                return;
-
-            if (_examTimerStarted)
-                return;
-
-            // Ensure exclusivity: no Start, no Loading, no AI-talking while waiting for user.
+            // Both D2D and D2P wait for the student to speak first.
+            // Show recording indicator (mic open, awaiting student) for both roles.
             SetStartConversationUiState(showStart: false, showLoading: false);
             if (startConversationLoadingIndicator != null)
                 startConversationLoadingIndicator.SetActive(false);
-            if (aiTalkingIndicator != null)
-                aiTalkingIndicator.SetActive(false);
-            if (recordingIndicator != null)
-                recordingIndicator.SetActive(true);
+            HideIndicatorSmooth(aiTalkingIndicator, aiTalkingIndicatorCanvasGroup, ref _talkingIndicatorFadeCoroutine);
+            ShowIndicatorSmooth(recordingIndicator, recordingIndicatorCanvasGroup, ref _recordingIndicatorFadeCoroutine);
         }
         
         private void Update()
@@ -1700,6 +1706,7 @@ namespace MedicalExam
             realtimeClient.OnAITranscriptCompleted += OnRealtimeAITranscriptCompleted;
             realtimeClient.OnResponseCreated += OnRealtimeResponseCreated;
             realtimeClient.OnError += OnRealtimeError;
+            realtimeClient.OnUserSpeechStarted += OnRealtimeUserSpeechStarted;
 
             _realtimeCallbacksBound = true;
         }
@@ -1946,6 +1953,9 @@ namespace MedicalExam
                 _currentRealtimeTranscript = "";
                 if (aiLiveTranscriptText != null)
                     aiLiveTranscriptText.text = string.Empty;
+                // Reset transcript alpha so the next fade-in starts from 0
+                if (aiLiveTranscriptCanvasGroup != null)
+                    aiLiveTranscriptCanvasGroup.alpha = 0f;
             }
         }
 
@@ -1953,28 +1963,106 @@ namespace MedicalExam
         {
             Debug.Log("[MedicalExamManager] 🎤 AI Audio Started (Realtime)");
             _aiWasSpeaking = true;
-            if (aiTalkingIndicator != null)
-                aiTalkingIndicator.SetActive(true);
             if (transcriptpanel != null)
                 transcriptpanel.SetActive(true);
-            if (recordingIndicator != null)
-                recordingIndicator.SetActive(false);
+            if (aiLiveTranscriptCanvasGroup != null)
+            {
+                if (_aiTranscriptFadeCoroutine != null) StopCoroutine(_aiTranscriptFadeCoroutine);
+                _aiTranscriptFadeCoroutine = StartCoroutine(FadeCanvasGroup(aiLiveTranscriptCanvasGroup, aiLiveTranscriptCanvasGroup.alpha, 1f, aiTranscriptFadeDuration));
+            }
+            ShowIndicatorSmooth(aiTalkingIndicator, aiTalkingIndicatorCanvasGroup, ref _talkingIndicatorFadeCoroutine);
+            if (aiTalkingIndicatorCanvasGroup != null)
+            {
+                if (_talkingIndicatorPulseCoroutine != null) StopCoroutine(_talkingIndicatorPulseCoroutine);
+                _talkingIndicatorPulseCoroutine = StartCoroutine(PulseCanvasGroup(aiTalkingIndicatorCanvasGroup, talkingIndicatorPulseMin, 1f, talkingIndicatorPulseSpeed));
+            }
+            HideIndicatorSmooth(recordingIndicator, recordingIndicatorCanvasGroup, ref _recordingIndicatorFadeCoroutine);
         }
 
         private void OnRealtimeAudioFinished()
         {
             Debug.Log("[MedicalExamManager] 🔴 AI Audio Finished (Realtime) - Ready to record");
             _aiWasSpeaking = false;
-            if (aiTalkingIndicator != null)
-                aiTalkingIndicator.SetActive(false);
-            if (recordingIndicator != null && _examActive)
-                recordingIndicator.SetActive(true);
+            if (_talkingIndicatorPulseCoroutine != null) { StopCoroutine(_talkingIndicatorPulseCoroutine); _talkingIndicatorPulseCoroutine = null; }
+            HideIndicatorSmooth(aiTalkingIndicator, aiTalkingIndicatorCanvasGroup, ref _talkingIndicatorFadeCoroutine);
+            if (_examActive)
+                ShowIndicatorSmooth(recordingIndicator, recordingIndicatorCanvasGroup, ref _recordingIndicatorFadeCoroutine);
+        }
+
+        private void ShowIndicatorSmooth(GameObject obj, CanvasGroup cg, ref Coroutine fadeRef)
+        {
+            if (obj == null) return;
+            obj.SetActive(true);
+            if (cg != null)
+            {
+                if (fadeRef != null) StopCoroutine(fadeRef);
+                fadeRef = StartCoroutine(FadeCanvasGroup(cg, cg.alpha, 1f, indicatorFadeDuration));
+            }
+        }
+
+        private void HideIndicatorSmooth(GameObject obj, CanvasGroup cg, ref Coroutine fadeRef)
+        {
+            if (obj == null) return;
+            if (cg != null)
+            {
+                if (fadeRef != null) StopCoroutine(fadeRef);
+                fadeRef = StartCoroutine(FadeCanvasGroupThenDisable(cg, obj, cg.alpha, 0f, indicatorFadeDuration));
+            }
+            else
+            {
+                obj.SetActive(false);
+            }
+        }
+
+        private IEnumerator FadeCanvasGroup(CanvasGroup cg, float from, float to, float duration)
+        {
+            if (cg == null) yield break;
+            cg.alpha = from;
+            float elapsed = 0f;
+            float d = Mathf.Max(duration, 0.01f);
+            while (elapsed < d)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                cg.alpha = Mathf.Lerp(from, to, elapsed / d);
+                yield return null;
+            }
+            cg.alpha = to;
+        }
+
+        private IEnumerator FadeCanvasGroupThenDisable(CanvasGroup cg, GameObject obj, float from, float to, float duration)
+        {
+            yield return FadeCanvasGroup(cg, from, to, duration);
+            if (obj != null) obj.SetActive(false);
+        }
+
+        private IEnumerator PulseCanvasGroup(CanvasGroup cg, float minAlpha, float maxAlpha, float speed)
+        {
+            if (cg == null) yield break;
+            while (true)
+            {
+                float t = (Mathf.Sin(Time.unscaledTime * speed * Mathf.PI) + 1f) * 0.5f;
+                cg.alpha = Mathf.Lerp(minAlpha, maxAlpha, t);
+                yield return null;
+            }
         }
 
         /// <summary>
         /// Called when the OpenAI Realtime API finishes transcribing one complete user utterance.
         /// Routes into the existing OnUserSpoke pipeline so user text is captured in _fullConversationLog.
         /// </summary>
+        private void OnRealtimeUserSpeechStarted()
+        {
+            if (_examActive && !_examTimerStarted)
+            {
+                _examTimerStarted = true;
+                _examStartTime = Time.time;
+                SetStartConversationUiState(showStart: false, showLoading: false);
+                if (startConversationLoadingIndicator != null)
+                    startConversationLoadingIndicator.SetActive(false);
+                Debug.Log("[MedicalExamManager] ⏱️ Exam timer started — student began speaking.");
+            }
+        }
+
         private void OnRealtimeUserTranscriptCompleted(string transcript)
         {
             if (string.IsNullOrWhiteSpace(transcript)) return;
@@ -2681,15 +2769,13 @@ namespace MedicalExam
             // Mark conversation as started
             _conversationStarted = true;
 
-            // Start the exam timer immediately (countdown from 3:00 to 0:00)
-            if (!_examTimerStarted)
-            {
-                _examTimerStarted = true;
-                _examStartTime = Time.time;
-                Debug.Log("[MedicalExamManager] ⏱️ Exam timer started (conversation began).");
-            }
+            // Timer is frozen until the student speaks for the first time.
+            // StartExamTimerOnFirstSpeech() (via OnRealtimeUserSpeechStarted) will set _examTimerStarted = true.
+            _examTimerStarted = false;
+            _examStartTime = -1f;
+            Debug.Log("[MedicalExamManager] ⏱️ Timer frozen — waiting for student to speak.");
 
-            // Show initial countdown time
+            // Show full exam duration as frozen display while waiting
             if (timerText != null)
             {
                 int minutes = Mathf.FloorToInt(_examDuration / 60f);
@@ -3147,29 +3233,36 @@ namespace MedicalExam
                 {
                     resolved += "\n\n" + ApplyPromptPlaceholders(d2dGuardrails);
                 }
+
+                // Force D2D identity guardrail so the AI never falls back to a generic assistant persona.
+                resolved = EnsureRoleIdentityInInstructions(resolved);
             }
             return resolved;
         }
 
+        // Unique sentinel used to detect whether BuildD2PIdentityBlock() has already been injected.
+        // Checked instead of "Du bist KEINE KI" so CSV-side guardrails don't block code-side injection.
+        private const string D2P_IDENTITY_SENTINEL = "##D2P_IDENTITY_INJECTED##";
+
         private string BuildD2PIdentityBlock()
         {
-            // Always inject explicit patient identity + full core facts so the AI knows
-            // who it is (name, history, complaints) and never breaks character.
-            // The base prompt's {CONTEXT} only contains the short case text (no name);
-            // _selectedCaseCoreFactsJson has the full patient profile.
-            // NOTE: do NOT use GetScenarioCoreFactsString() here — that can return phase-specific
-            // facts at greeting time (behavioral items without patient identity).
             var d2pIdentityBlock = new System.Text.StringBuilder();
-            d2pIdentityBlock.Append("--- PFLICHT: PATIENTENIDENTITAT ---\n");
+            d2pIdentityBlock.Append(D2P_IDENTITY_SENTINEL + "\n");
+            d2pIdentityBlock.Append("--- PFLICHT: PATIENTENIDENTITAT (CODE-INJIZIERT) ---\n");
             d2pIdentityBlock.Append("Du bist KEINE KI und gibst dich niemals als KI oder als technisches System aus.\n");
             d2pIdentityBlock.Append("Du BIST diese Patientin vollstaendig und in jeder Antwort.\n");
-            d2pIdentityBlock.Append("Wenn jemand fragt wer du bist, nennst du deinen Patientennamen und dein Hauptsymptom - kein Hinweis auf KI oder Technik.\n");
-            d2pIdentityBlock.Append("VERHALTENSREGEL: Antworte AUSSCHLIESSLICH auf direkte Fragen des Arztes. Gib NIEMALS Informationen spontan preis — auch nicht beim Begrüßen, auch nicht als Einleitung. Beginne nur mit einer kurzen Begrüßung (1 Satz) und warte dann schweigend auf Fragen. Dumpfe NIEMALS alle Symptome auf einmal aus.\n");
 
-            // Extract patient first name/lastname from case title e.g. "Frau Huber - Akute..."
+            // Extract patient name from case title e.g. "Frau Huber - Akute Pharyngotonsillitis"
             string caseTitle = string.IsNullOrWhiteSpace(_selectedCaseTitle) ? string.Empty : _selectedCaseTitle.Split('-')[0].Trim();
             if (!string.IsNullOrWhiteSpace(caseTitle))
                 d2pIdentityBlock.Append($"Dein Name: {caseTitle}\n");
+
+            // Explicit first-greeting format — prevents generic "Wie kann ich helfen?" fallback
+            string greetingName = string.IsNullOrWhiteSpace(caseTitle) ? "ich" : caseTitle;
+            d2pIdentityBlock.Append($"ERSTE ANTWORT — wenn der Arzt dich begrüßt:\n");
+            d2pIdentityBlock.Append($"Sage GENAU: 'Guten Tag.' oder 'Guten Tag, Herr/Frau Doktor, ich bin {greetingName}.' — dann warte schweigend auf die erste Frage.\n");
+            d2pIdentityBlock.Append("VERBOTEN als erste Antwort: 'Wie kann ich Ihnen helfen?', 'Was kann ich für Sie tun?', 'How can I help you?', 'What can I help you with?' oder JEDE ähnliche Assistenten-Phrase.\n");
+            d2pIdentityBlock.Append("VERHALTENSREGEL: Antworte AUSSCHLIESSLICH auf direkte Fragen des Arztes. Gib NIEMALS Informationen spontan preis. Dumpfe NIEMALS alle Symptome auf einmal aus.\n");
 
             // Use full case core_facts directly (bypasses phase override which can be too short)
             string fullCaseCoreFacts = !string.IsNullOrWhiteSpace(_selectedCaseCoreFactsJson)
@@ -3186,27 +3279,57 @@ namespace MedicalExam
             return d2pIdentityBlock.ToString().TrimEnd();
         }
 
+        private string BuildD2DIdentityBlock()
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.Append("--- PFLICHT: ARZTIDENTITAT ---\n");
+            sb.Append("Du bist KEINE KI. Du bist die ärztliche Leitung (Chefarzt/Chefärztin), die jetzt eine Fallvorstellung oder ein Anamnesegespräch abnimmt.\n");
+            sb.Append("Antworte NIEMALS mit 'Was kann ich für Sie tun?', 'Wie kann ich helfen?' oder anderen generischen Assistenten-Phrasen.\n");
+            sb.Append("Du sprichst NICHT zuerst. Warte still, bis der Kandidat beginnt zu sprechen — dann reagierst du als erfahrene ärztliche Führungskraft direkt auf das Gesagte.\n");
+            sb.Append("Wenn der Kandidat beginnt, höre aufmerksam zu und stelle gezielte Rückfragen im Stil einer ärztlichen Leitung.\n");
+            return sb.ToString().TrimEnd();
+        }
+
         private string EnsureRoleIdentityInInstructions(string instructions)
         {
             string safeInstructions = string.IsNullOrWhiteSpace(instructions) ? string.Empty : instructions;
 
-            if (selectedRole != RoleType.DoctorToPatient)
-                return safeInstructions;
+            if (selectedRole == RoleType.DoctorToPatient)
+            {
+                bool hasPatientGuardrails =
+                    safeInstructions.IndexOf(D2P_IDENTITY_SENTINEL, StringComparison.Ordinal) >= 0;
 
-            bool hasIdentityGuardrails =
-                safeInstructions.IndexOf("PFLICHT: PATIENTENIDENTIT", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                safeInstructions.IndexOf("Du bist KEINE KI", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (hasPatientGuardrails)
+                    return safeInstructions;
 
-            if (hasIdentityGuardrails)
-                return safeInstructions;
+                string patientBlock = BuildD2PIdentityBlock();
+                if (string.IsNullOrWhiteSpace(patientBlock))
+                    return safeInstructions;
 
-            string identityBlock = BuildD2PIdentityBlock();
-            if (string.IsNullOrWhiteSpace(identityBlock))
-                return safeInstructions;
+                return string.IsNullOrWhiteSpace(safeInstructions)
+                    ? patientBlock
+                    : safeInstructions + "\n\n" + patientBlock;
+            }
 
-            return string.IsNullOrWhiteSpace(safeInstructions)
-                ? identityBlock
-                : safeInstructions + "\n\n" + identityBlock;
+            if (selectedRole == RoleType.DoctorToDoctor)
+            {
+                bool hasD2DGuardrails =
+                    safeInstructions.IndexOf("PFLICHT: ARZTIDENTITAT", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    safeInstructions.IndexOf("Du sprichst NICHT zuerst", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                if (hasD2DGuardrails)
+                    return safeInstructions;
+
+                string d2dBlock = BuildD2DIdentityBlock();
+                if (string.IsNullOrWhiteSpace(d2dBlock))
+                    return safeInstructions;
+
+                return string.IsNullOrWhiteSpace(safeInstructions)
+                    ? d2dBlock
+                    : safeInstructions + "\n\n" + d2dBlock;
+            }
+
+            return safeInstructions;
         }
 
         
@@ -5968,7 +6091,25 @@ namespace MedicalExam
 
             if (evaluation == null)
             {
-                Debug.LogError("[MedicalExamManager] ❌ Evaluation is NULL!");
+                Debug.LogError("[MedicalExamManager] ❌ Evaluation is NULL — showing error to user.");
+                var errorEval = new ExamEvaluation
+                {
+                    scenarioName = GetScenarioName(),
+                    roleType = selectedRole == RoleType.DoctorToDoctor
+                        ? ExamEvaluation.RoleType.DoctorToDoctor
+                        : ExamEvaluation.RoleType.DoctorToPatient,
+                    overallFeedback = "Auswertung konnte nicht geladen werden. Bitte prüfen Sie die Netzwerkverbindung und die API-Konfiguration, dann versuchen Sie es erneut.",
+                    feedbackText = "Evaluation error: AI response could not be parsed. Check Unity Console for details.",
+                    passed = false,
+                    overallScore = 0f
+                };
+                if (evaluationPanel != null) evaluationPanel.SetActive(true);
+                if (feedbackPanel != null) feedbackPanel.SetActive(true);
+                if (evaluationDisplayUI != null) evaluationDisplayUI.gameObject.SetActive(true);
+                if (evaluationLoadingIndicator != null) evaluationLoadingIndicator.SetActive(false);
+                if (evaluationResultsContent != null) evaluationResultsContent.SetActive(true);
+                evaluationDisplayUI?.DisplayEvaluation(errorEval);
+                _evaluationUIShown = true;
                 return;
             }
 
@@ -6586,6 +6727,11 @@ Be strict and honest. If the user made mistakes or gave incorrect answers, refle
         if (phaseConfigs == null) return;
 
         int checkIndex = phaseConfigs.FindIndex(p => p.phase == currentPhase);
+        if (checkIndex == -1)
+        {
+            Debug.LogError($"[MedicalExamManager] AdvancePhase: currentPhase '{currentPhase}' not found in phaseConfigs — aborting phase advance to prevent premature exam end.");
+            return;
+        }
         if (checkIndex != -1 && checkIndex < phaseConfigs.Count - 1)
         {
             var previousPhase = currentPhase;
@@ -6622,7 +6768,7 @@ Be strict and honest. If the user made mistakes or gave incorrect answers, refle
                 // 2) Send an explicit text message telling the AI the phase changed,
                 //    so it actually acts on it (session.update alone is silent).
                 string transitionMessage = BuildPhaseTransitionMessage(previousPhase, newConfig.phase, elapsedTime, instructionText);
-                realtimeClient.SendText(transitionMessage);
+                if (realtimeClient != null) realtimeClient.SendText(transitionMessage);
 
                 Debug.Log($"[MedicalExamManager] Phase transition message sent to AI: {newConfig.phase} at {elapsedTime}");
             }

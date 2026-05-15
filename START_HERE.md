@@ -103,6 +103,26 @@ For every future prompt-related request in this repo:
 
 ## Update Log
 
+### 2026-04-25 - Unified CEO 5-Criterion Grid for D2D and D2P
+- Achieved:
+  - Clarified that **both D2D and D2P use the same CEO 5-criterion grid**: Inhalt / Gesprächsfähigkeit / Wortschatz / Grammatik / Aussprache — each max 3.99, total /20, pass ≥12
+  - Fixed D2P parsing: was looking for old legacy keys (`kommunikation`, `hoerverstehen`, etc.); now routes through `TryBuildD2DEvaluation` which reads CEO keys (`content`, `conversation`, `vocabulary`, `grammar`, `pronunciation`) — same parser as D2D
+  - Fixed `hasExpectedKeys` for D2P to recognise `criteria`, `content`, `finalVerdict`, `totalScore` as valid structures (prevents spurious repair calls)
+  - Fixed D2D display: was only showing 3 of 5 criteria; added `d2dGrammarScoreText` and `d2dPronunciationScoreText` inspector fields and display code for all 5
+  - Fixed D2P display: now shows CEO labels (Inhalt / Gesprächsfähigkeit / Wortschatz / Grammatik / Aussprache) instead of legacy labels; uses `d2dContent`, `d2dConversation`, `d2dVocabulary`, `d2dGrammar`, `d2dPronunciation` fields
+  - Updated secondary parser (`SendFeedbackToGPTForParsing`) prompt and parsing to use CEO schema
+  - Updated `DisplayFeedbackDelayed` for D2P to use `BuildD2DFiveCriteriaFeedback` when `usesD2DFiveCriteria` is true
+  - Legacy 5D fallback preserved for both paths (old `kommunikation`/`hoerverstehen` responses still display correctly)
+- Files edited:
+  - [Assets/Scripts/EvaluationDisplayUI.cs](Assets/Scripts/EvaluationDisplayUI.cs) — all display and parsing paths above
+- Scripts used:
+  - None
+- Unity wiring needed:
+  - In Inspector, assign two new fields on `EvaluationDisplayUI`: `d2dGrammarScoreText` and `d2dPronunciationScoreText` — point them at the Grammatik and Aussprache text objects in the D2D results panel
+- Next best action:
+  - Wire the two new Inspector fields (Grammatik + Aussprache) in the D2D panel
+  - Run a test D2D and D2P session; verify Console shows `D2D CEO evaluation parsed` and `D2P CEO evaluation parsed` with non-zero scores for all 5 criteria
+
 ### 2026-04-13 - D2P Realtime Prompt Injection Hardening
 - Achieved:
   - Added a defensive prompt-injection layer so D2P patient identity guardrails are enforced before every realtime `session.update`, not only during initial prompt generation
@@ -359,6 +379,54 @@ For every future prompt-related request in this repo:
   - Test D2P greeting: patient should say only "Guten Tag, ich bin [Name]." and stop
   - Test D2D: verify Terms phase starts and AI presents 5 terms before finishing
   - Monitor Unity Console for `[Azure]` and `[Claude]` log lines to confirm both services are active
+
+### 2026-04-25 - Smooth AI Talk UI + Phase Transition Safety
+- Achieved:
+  - **Smooth indicators**: `aiTalkingIndicator` and `recordingIndicator` now fade in/out (configurable `indicatorFadeDuration`, default 0.25s) instead of snapping on/off
+  - **Pulse while talking**: `aiTalkingIndicator` pulses between `talkingIndicatorPulseMin` and 1.0 alpha while AI is speaking (configurable speed/range in Inspector)
+  - **Transcript fade-in**: `aiLiveTranscriptCanvasGroup` fades from 0→1 each time AI begins a new response, reset to 0 on `response.created`
+  - **Phase transition null guard**: `SendText(transitionMessage)` now has explicit null check on realtimeClient before calling (prevents silent crash if session drops mid-phase)
+  - New Inspector fields: `aiTalkingIndicatorCanvasGroup`, `recordingIndicatorCanvasGroup`, `indicatorFadeDuration`, `talkingIndicatorPulseMin`, `talkingIndicatorPulseSpeed`
+- Files edited:
+  - [Assets/Scripts/MedicalExamManager.cs](Assets/Scripts/MedicalExamManager.cs) — `OnRealtimeAudioStarted`, `OnRealtimeAudioFinished`, `OnRealtimeResponseCreated`, `OnRealtimeSessionReady`, `AdvancePhase`, added `FadeCanvasGroup`, `FadeCanvasGroupThenDisable`, `PulseCanvasGroup`, `ShowIndicatorSmooth`, `HideIndicatorSmooth`
+- Unity wiring needed:
+  - Add a `CanvasGroup` component to your AI Talking indicator GameObject, then assign it to `aiTalkingIndicatorCanvasGroup`
+  - Add a `CanvasGroup` component to your Recording indicator GameObject, then assign it to `recordingIndicatorCanvasGroup`
+  - Both fields are optional — if not assigned, snapping behavior is preserved as fallback
+
+### 2026-04-25 - Pre-Session Audit Fixes (3 Critical Bugs)
+- Achieved:
+  - **RemotePromptManager**: Network/parse failures no longer clear in-memory cache — app keeps working on last good CSV data instead of serving blank prompts
+  - **AdvancePhase guard**: If `currentPhase` is not found in `phaseConfigs`, now logs error and returns instead of triggering premature exam completion
+  - **Evaluation null fallback**: When evaluation JSON parse fails, user now sees German error message ("Auswertung konnte nicht geladen werden...") instead of being stuck on loading screen forever
+- Files edited:
+  - [Assets/Scripts/Prompts/RemotePromptManager.cs](Assets/Scripts/Prompts/RemotePromptManager.cs) — removed all `_selectedByKey.Clear()` calls from error branches; cache preserved on failure
+  - [Assets/Scripts/MedicalExamManager.cs](Assets/Scripts/MedicalExamManager.cs) — `AdvancePhase()` early return guard + `OnEvaluationParsed()` null fallback with user-visible error
+- Scripts used:
+  - None
+- Next best action:
+  - Verify Console shows "Keeping N cached prompts as fallback" when simulating offline
+  - Verify evaluation screen shows error text if Claude API key is missing/invalid
+
+### 2026-04-25 - Frozen Timer + Student-First Start + D2D Identity Guardrail
+- Achieved:
+  - Timer now frozen at full duration on Start click; starts only when student begins speaking (VAD `speech_started` event)
+  - Added `OnUserSpeechStarted` event to `OpenAIRealtimeClient`, fired on `input_audio_buffer.speech_started`
+  - Added `OnRealtimeUserSpeechStarted()` handler in `MedicalExamManager` that triggers `_examTimerStarted` on first student speech
+  - Both D2D and D2P now show recording indicator (awaiting student) after session.updated, instead of D2D doing nothing
+  - Added `BuildD2DIdentityBlock()`: prevents AI from saying "Was kann ich für Sie tun?" — D2D AI now waits silently and responds in character when student speaks
+  - `EnsureRoleIdentityInInstructions()` now injects D2D identity block for D2D (was D2P only)
+  - Updated welcome texts: "Die Zeit startet, sobald Sie zu sprechen beginnen" (was "Die Zeit geht jetzt los")
+- Files edited:
+  - [Assets/Scripts/OpenAIRealtimeClient.cs](Assets/Scripts/OpenAIRealtimeClient.cs) — `OnUserSpeechStarted` event + fire on `speech_started`
+  - [Assets/Scripts/MedicalExamManager.cs](Assets/Scripts/MedicalExamManager.cs) — frozen timer, `OnRealtimeUserSpeechStarted`, `BuildD2DIdentityBlock`, extended `EnsureRoleIdentityInInstructions`, fixed `OnRealtimeSessionReady` for D2D
+  - [Assets/Scripts/WelcomeAudioPlayer.cs](Assets/Scripts/WelcomeAudioPlayer.cs) — updated welcome text defaults
+- Scripts used:
+  - None
+- Next best action:
+  - In Unity Console verify `⏱️ Exam timer started — student began speaking.` appears only after first speech
+  - Verify D2D AI stays silent until student speaks, then responds as Chefärztin (no generic greeting)
+  - If welcome texts were overridden in Inspector, update them manually to match the new default text
 
 ## Entry Template (Copy For Next Update)
 

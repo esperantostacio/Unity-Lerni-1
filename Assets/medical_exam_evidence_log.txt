@@ -7,7 +7,7 @@ in the recorded conversation and return structured JSON feedback.
 EXPECTED OUTPUT SCHEMA:
 D2P — criteria: {Kommunikation, Verständnis, Struktur, Empathie, Vollständigkeit}, totalScore (/20), generalFeedback
 
-EVALUATION DATE: 2026-04-23 01:39:28
+EVALUATION DATE: 2026-04-25 14:13:50
 SESSION: None | Medical Exam | Start
 
 --- EVALUATION DATA ---
