@@ -103,6 +103,23 @@ For every future prompt-related request in this repo:
 
 ## Update Log
 
+### 2026-05-17 - gpt-realtime-2 API Migration (Breaking Schema Changes)
+- Achieved:
+  - Fixed `"Unknown parameter: 'session.modalities'"` error that blocked all sessions
+  - Migrated both clients to gpt-realtime-2 schema: `modalities` → `output_modalities: ["audio"]`
+  - Switched turn detection from `server_vad` (removed) to `semantic_vad` with `eagerness: "low"` — AI waits longer before responding, reducing premature interruptions during student thinking pauses
+  - Updated transcription model `whisper-1` → `gpt-realtime-whisper` in `OpenAIRealtimeClient`
+  - Removed deprecated VAD fields (`threshold`, `silence_duration_ms`, `prefix_padding_ms`) — replaced by `eagerness`
+  - Restructured `RealtimeConversationManager.SendSessionUpdate()` from flat to nested `audio.input`/`audio.output` format required by new API
+  - Set `speakFirstOnStart = false` default in `RealtimeConversationManager` — mic starts immediately so student speaks first
+- Files edited:
+  - [Assets/Scripts/OpenAIRealtimeClient.cs](Assets/Scripts/OpenAIRealtimeClient.cs) — `SendSessionUpdate()`, `WelcomeSpeakCoroutine()`
+  - [com.convai.openai/Runtime/Scripts/RealtimeConversationManager.cs](com.convai.openai/Runtime/Scripts/RealtimeConversationManager.cs) — `SendSessionUpdate()`, `speakFirstOnStart`
+- Next best action:
+  - In Unity Inspector: verify `RealtimeConversationManager.speakFirstOnStart` is unchecked (user speaks first)
+  - If `eagerness: "low"` causes AI to feel slow to respond in D2D, switch to `"medium"` in `OpenAIRealtimeClient.SendSessionUpdate()` line ~650
+  - If transcription quality changes with `gpt-realtime-whisper`, check Unity Console for transcription errors
+
 ### 2026-04-25 - Unified CEO 5-Criterion Grid for D2D and D2P
 - Achieved:
   - Clarified that **both D2D and D2P use the same CEO 5-criterion grid**: Inhalt / Gesprächsfähigkeit / Wortschatz / Grammatik / Aussprache — each max 3.99, total /20, pass ≥12

@@ -10,6 +10,8 @@ using Newtonsoft.Json.Linq;
 
 public class OpenAIRealtimeClient : MonoBehaviour
 {
+    private const string DefaultRealtimeModel = "gpt-realtime-2";
+
     private static readonly HashSet<string> SupportedRealtimeVoices = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         "alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse", "marin", "cedar"
@@ -17,7 +19,8 @@ public class OpenAIRealtimeClient : MonoBehaviour
 
     [Header("Configuration")]
     [SerializeField] private string apiKey;
-    [SerializeField] private string model = "gpt-4o-realtime-preview-2024-12-17";
+    [SerializeField] private string model = DefaultRealtimeModel;
+    [SerializeField] private string reasoningEffort = "low"; // Realtime 2: low/medium/high
     
     [Header("Audio Output")]
     [Tooltip("Uses PcmAudioPlayer if assigned. Otherwise uses internal decoding (OnAudioFilterRead).")]
@@ -39,6 +42,9 @@ public class OpenAIRealtimeClient : MonoBehaviour
         private WebSocket _webSocket; // NativeWebSocket — works on Quest/Android/PC/Editor
         private bool _isConnecting;
         private bool _shouldReconnect;
+        // Guard: only commit+create after session.updated confirms instructions are live.
+        // Prevents AI responding as plain GPT before persona is applied.
+        private bool _sessionUpdateApplied = false;
 
         // Audio Handling
         private int _outputSampleRate;
@@ -53,6 +59,10 @@ public class OpenAIRealtimeClient : MonoBehaviour
         private bool _audioChunkReceivedFlag = false; // Thread-safe flag from socket thread
         private const float AUDIO_TIMEOUT = 1.0f; // If no audio for 1s, consider it finished
         private int _audioChunkCount = 0; // Debug counter
+        private int _pendingAudioBytes = 0; // Bytes appended since last commit
+        private const int MinCommitBytes = 4800; // 100ms at 24kHz PCM16 (24000 * 0.1 * 2)
+        // Set in speech_stopped so committed handler knows whether to fire response.create
+        private bool _shouldCreateResponseAfterCommit = false;
 
         // Tool Definitions
         [Serializable]
@@ -169,6 +179,9 @@ public class OpenAIRealtimeClient : MonoBehaviour
             if (_isConnecting) return;
             if (_webSocket != null && _webSocket.State == WebSocketState.Open) return;
 
+            _sessionUpdateApplied = false; // reset so no response fires before session.updated
+            _pendingAudioBytes = 0;
+            _shouldCreateResponseAfterCommit = false;
             StartCoroutine(ConnectCoroutine());
         }
 
@@ -176,15 +189,15 @@ public class OpenAIRealtimeClient : MonoBehaviour
         {
             _isConnecting = true;
 
-            // Build URL with auth headers via query param workaround:
-            // NativeWebSocket supports custom headers natively.
+            model = NormalizeRealtimeModel(model);
+
+            // GA Realtime API: do not send the deprecated OpenAI-Beta realtime header.
             var headers = new Dictionary<string, string>
             {
-                { "Authorization", "Bearer " + apiKey },
-                { "OpenAI-Beta", "realtime=v1" }
+                { "Authorization", "Bearer " + apiKey }
             };
 
-            string url = $"wss://api.openai.com/v1/realtime?model={model}";
+            string url = $"wss://api.openai.com/v1/realtime?model={Uri.EscapeDataString(model)}";
             _webSocket = new WebSocket(url, headers);
 
             _webSocket.OnOpen += () =>
@@ -221,6 +234,7 @@ public class OpenAIRealtimeClient : MonoBehaviour
 
         public async void Disconnect()
         {
+            _sessionUpdateApplied = false;
             if (_webSocket != null)
             {
                 if (_webSocket.State == WebSocketState.Open)
@@ -306,7 +320,7 @@ public class OpenAIRealtimeClient : MonoBehaviour
                 if (string.IsNullOrEmpty(type)) return;
 
                 // Log ALL events except high-frequency audio deltas for debugging
-                if (type != "response.audio.delta" && type != "input_audio_buffer.speech_started" && type != "input_audio_buffer.committed")
+                if (type != "response.audio.delta" && type != "response.output_audio.delta" && type != "input_audio_buffer.speech_started" && type != "input_audio_buffer.committed")
                 {
                     // Truncate json for readability (NativeWebSocket: already on main thread)
                     string shortJson = json.Length > 500 ? json.Substring(0, 500) + "..." : json;
@@ -316,7 +330,8 @@ public class OpenAIRealtimeClient : MonoBehaviour
                 switch (type)
                 {
                     case "response.audio.delta":
-                        string deltaData = response["delta"]?.ToString();
+                    case "response.output_audio.delta":
+                        string deltaData = response["delta"]?.ToString() ?? response.SelectToken("audio.delta")?.ToString();
                         if (!string.IsNullOrEmpty(deltaData))
                         {
                             if (_outputMuted)
@@ -350,16 +365,18 @@ public class OpenAIRealtimeClient : MonoBehaviour
                         break;
 
                     case "response.audio_transcript.delta":
+                    case "response.output_audio_transcript.delta":
                     {
-                        string transcriptDelta = response["delta"]?.ToString();
+                        string transcriptDelta = response["delta"]?.ToString() ?? response.SelectToken("transcript.delta")?.ToString();
                         if (!string.IsNullOrEmpty(transcriptDelta))
                             OnTranscriptDelta?.Invoke(transcriptDelta);
                         break;
                     }
 
                     case "response.audio_transcript.done":
+                    case "response.output_audio_transcript.done":
                     {
-                        string fullTranscript = response["transcript"]?.ToString();
+                        string fullTranscript = response["transcript"]?.ToString() ?? response.SelectToken("transcript.text")?.ToString();
                         if (!string.IsNullOrEmpty(fullTranscript))
                         {
                             Debug.Log($"[OpenAIRealtimeClient] AI said: {fullTranscript}");
@@ -367,6 +384,11 @@ public class OpenAIRealtimeClient : MonoBehaviour
                         }
                         break;
                     }
+
+                    case "response.audio.done":
+                    case "response.output_audio.done":
+                        Debug.Log("[OpenAIRealtimeClient] Audio stream done event received.");
+                        break;
 
                     case "conversation.item.input_audio_transcription.completed":
                     {
@@ -434,17 +456,28 @@ public class OpenAIRealtimeClient : MonoBehaviour
                     }
                     
                     case "error":
+                    {
+                        string errorCode = response["error"]?["code"]?.ToString();
+                        // Suppress the benign double-commit noise that occurs when server-side VAD
+                        // has already committed the buffer before our handler runs.
+                        if (errorCode == "input_audio_buffer_commit_empty")
+                        {
+                            _shouldCreateResponseAfterCommit = false;
+                            break;
+                        }
                         string errorMsg = response["error"]?.ToString();
                         Debug.LogError($"[OpenAIRealtimeClient] API ERROR: {errorMsg}");
                         OnError?.Invoke($"API Error: {errorMsg}");
                         break;
+                    }
 
                     case "session.created":
                         Debug.Log("[OpenAIRealtimeClient] Session created successfully");
                         break;
 
                     case "session.updated":
-                        Debug.Log("[OpenAIRealtimeClient] Session updated successfully");
+                        _sessionUpdateApplied = true; // persona is live — safe to create responses
+                        Debug.Log("[OpenAIRealtimeClient] Session updated — instructions applied, user can speak now");
                         OnSessionUpdated?.Invoke();
                         break;
 
@@ -464,11 +497,34 @@ public class OpenAIRealtimeClient : MonoBehaviour
 
                     case "input_audio_buffer.speech_started":
                         Debug.Log("[OpenAIRealtimeClient] VAD: User speech started");
+                        _pendingAudioBytes = 0; // reset counter for this speech segment
                         OnUserSpeechStarted?.Invoke();
                         break;
 
                     case "input_audio_buffer.speech_stopped":
                         Debug.Log("[OpenAIRealtimeClient] VAD: User speech stopped");
+                        // With server-side VAD (semantic_vad) the server auto-commits the buffer
+                        // and fires input_audio_buffer.committed. We must NOT send a manual commit
+                        // here — that would double-commit an already-empty buffer and produce the
+                        // "input_audio_buffer_commit_empty" error. Instead, set a flag and let the
+                        // committed handler fire response.create once the server confirms the commit.
+                        // We trust semantic_vad to filter background noise; do not gate on
+                        // _pendingAudioBytes here because speech_started may reset the counter to 0
+                        // in the same DispatchMessageQueue batch, before SendAudio() can accumulate bytes.
+                        _shouldCreateResponseAfterCommit = _sessionUpdateApplied;
+                        if (!_shouldCreateResponseAfterCommit)
+                        {
+                            Debug.LogWarning("[OpenAIRealtimeClient] Speech stopped but session.updated not yet confirmed — discarding.");
+                        }
+                        _pendingAudioBytes = 0;
+                        break;
+
+                    case "input_audio_buffer.committed":
+                        if (_shouldCreateResponseAfterCommit)
+                        {
+                            _shouldCreateResponseAfterCommit = false;
+                            SendJson(new { type = "response.create" });
+                        }
                         break;
                 }
             }
@@ -487,6 +543,7 @@ public class OpenAIRealtimeClient : MonoBehaviour
             string base64Audio = Convert.ToBase64String(pcmData);
             var eventData = new { type = "input_audio_buffer.append", audio = base64Audio };
             SendJson(eventData);
+            _pendingAudioBytes += pcmData.Length;
         }
         
         // Helper to commit the buffer if needed (realtime API commits automatically usually, but "input_audio_buffer.commit" exists)
@@ -609,6 +666,7 @@ public class OpenAIRealtimeClient : MonoBehaviour
         public void SendSessionUpdate(string instructions, object tools = null, string voice = "alloy")
         {
             string normalizedVoice = NormalizeRealtimeVoice(voice);
+            string normalizedReasoningEffort = NormalizeReasoningEffort(reasoningEffort);
 
             // Enforce German language for all responses + natural-turn-taking rules
             const string germanDirective =
@@ -620,25 +678,39 @@ public class OpenAIRealtimeClient : MonoBehaviour
                 "bevor du antwortest. Denkpausen von 1–3 Sekunden sind normal und kein Gesprächsende.\n\n";
             string fullInstructions = germanDirective + instructions;
 
-            // Build session config as JObject to include all required fields
+            // Build session config — gpt-realtime-2 nested audio object structure
             var session = new JObject
             {
-                ["modalities"] = new JArray("text", "audio"),
+                ["type"] = "realtime",
+                ["output_modalities"] = new JArray("audio"),
                 ["instructions"] = fullInstructions,
-                ["voice"] = normalizedVoice,
-                ["input_audio_format"] = "pcm16",
-                ["output_audio_format"] = "pcm16",
-                ["input_audio_transcription"] = new JObject
+                ["audio"] = new JObject
                 {
-                    ["model"] = "whisper-1",
-                    ["language"] = "de"
-                },
-                ["turn_detection"] = new JObject
-                {
-                    ["type"] = "server_vad",
-                    ["threshold"] = 0.4,         // lower = catches quiet fillers (hmm, äh, also...) and resets silence counter
-                    ["prefix_padding_ms"] = 500,  // extra lead captures first syllable after a thinking pause
-                    ["silence_duration_ms"] = 2550  // ~2.6 s silence before AI responds (–15% from 3000)
+                    ["input"] = new JObject
+                    {
+                        ["format"] = new JObject
+                        {
+                            ["type"] = "audio/pcm",
+                            ["rate"] = 24000
+                        },
+                        ["transcription"] = new JObject
+                        {
+                            ["model"] = "gpt-realtime-whisper",
+                            ["language"] = "de"
+                        },
+                        ["turn_detection"] = new JObject
+                        {
+                            ["type"] = "semantic_vad",
+                            ["eagerness"] = "low",
+                            ["create_response"] = false,
+                            ["interrupt_response"] = true
+                        }
+                    },
+                    ["output"] = new JObject
+                    {
+                        ["format"] = new JObject { ["type"] = "audio/pcm", ["rate"] = 24000 },
+                        ["voice"] = normalizedVoice
+                    }
                 },
                 ["tool_choice"] = "auto"
             };
@@ -654,7 +726,7 @@ public class OpenAIRealtimeClient : MonoBehaviour
                 ["session"] = session
             };
 
-            Debug.Log($"[OpenAIRealtimeClient] Sending session.update with modalities=[text,audio]");
+            Debug.Log($"[OpenAIRealtimeClient] Sending session.update with output_modalities=[audio], semantic_vad");
             SendJson(eventData);
         }
 
@@ -701,12 +773,22 @@ public class OpenAIRealtimeClient : MonoBehaviour
                 ["type"] = "session.update",
                 ["session"] = new JObject
                 {
-                    ["modalities"] = new JArray("text", "audio"),
+                    ["type"] = "realtime",
+                    ["output_modalities"] = new JArray("audio"),
                     ["instructions"] = instruction,
-                    ["voice"] = NormalizeRealtimeVoice(voice),
-                    ["input_audio_format"] = "pcm16",
-                    ["output_audio_format"] = "pcm16",
-                    ["turn_detection"] = JValue.CreateNull()
+                    ["audio"] = new JObject
+                    {
+                        ["input"] = new JObject
+                        {
+                            ["format"] = new JObject { ["type"] = "audio/pcm", ["rate"] = 24000 },
+                            ["turn_detection"] = JValue.CreateNull()
+                        },
+                        ["output"] = new JObject
+                        {
+                            ["format"] = new JObject { ["type"] = "audio/pcm", ["rate"] = 24000 },
+                            ["voice"] = NormalizeRealtimeVoice(voice)
+                        }
+                    }
                 }
             };
             SendJson(sessionUpdate);
@@ -765,6 +847,33 @@ public class OpenAIRealtimeClient : MonoBehaviour
 
             Debug.LogWarning($"[OpenAIRealtimeClient] Unsupported realtime voice '{voice}'. Using '{mapped}' instead.");
             return mapped;
+        }
+
+        private string NormalizeReasoningEffort(string effort)
+        {
+            string requested = string.IsNullOrWhiteSpace(effort) ? "low" : effort.Trim().ToLowerInvariant();
+            if (requested == "low" || requested == "medium" || requested == "high")
+                return requested;
+
+            Debug.LogWarning($"[OpenAIRealtimeClient] Unsupported reasoning effort '{effort}'. Using 'low' instead.");
+            return "low";
+        }
+
+        private string NormalizeRealtimeModel(string configuredModel)
+        {
+            string requested = string.IsNullOrWhiteSpace(configuredModel)
+                ? DefaultRealtimeModel
+                : configuredModel.Trim();
+
+            // Old preview IDs can remain serialized in scenes/prefabs and cause model_not_found.
+            if (requested.StartsWith("gpt-4o-realtime-preview", StringComparison.OrdinalIgnoreCase)
+                || requested.Equals("gpt-4o-realtime", StringComparison.OrdinalIgnoreCase))
+            {
+                Debug.LogWarning($"[OpenAIRealtimeClient] Legacy realtime model '{requested}' detected. Using '{DefaultRealtimeModel}' instead.");
+                return DefaultRealtimeModel;
+            }
+
+            return requested;
         }
 
         // Trigger the AI to generate the first response

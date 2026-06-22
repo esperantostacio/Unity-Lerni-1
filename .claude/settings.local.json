@@ -6,7 +6,32 @@
       "Bash(ls /Users/k1bfs/Downloads/lerini3/*.csproj)",
       "Bash(du -sh /Users/k1bfs/Downloads/lerini3/mono_crash.*)",
       "Bash(du -ch /Users/k1bfs/Downloads/lerini3/mono_crash.*)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "WebSearch",
+      "WebFetch(domain:platform.openai.com)",
+      "WebFetch(domain:developers.openai.com)",
+      "WebFetch(domain:community.openai.com)",
+      "WebFetch(domain:www.datacamp.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(gh api *)",
+      "Bash(brew list *)",
+      "Read(//usr/local/bin/**)",
+      "WebFetch(domain:github.com)",
+      "Bash(git -C /Users/k1bfs/Downloads/lerini3 log --oneline)",
+      "Bash(git -C /Users/k1bfs/Downloads/lerini3 show 0a050f1:Assets/Scripts/OpenAIRealtimeClient.cs)",
+      "Bash(git -C /Users/k1bfs/Downloads/lerini3 status)",
+      "Bash(git -C /Users/k1bfs/Downloads/lerini3 log --oneline -3)",
+      "Bash(git -C /Users/k1bfs/Downloads/lerini3 status LerniPlatfrom/)",
+      "Bash(git -C /Users/k1bfs/Downloads/lerini3 diff --name-only)",
+      "Bash(git -C /Users/k1bfs/Downloads/lerini3 status LerniPlatfrom/src/app/cases/page.tsx)",
+      "Bash(git -C /Users/k1bfs/Downloads/lerini3 ls-files LerniPlatfrom/src/app/cases/page.tsx)",
+      "Bash(git -C /Users/k1bfs/Downloads/lerini3 diff LerniPlatfrom/src/app/cases/page.tsx)",
+      "Bash(git -C /Users/k1bfs/Downloads/lerini3 diff --stat)",
+      "Bash(git -C /Users/k1bfs/Downloads/lerini3 status --short LerniPlatfrom/)",
+      "Bash(git -C /Users/k1bfs/Downloads/lerini3 show HEAD:LerniPlatfrom/src/app/cases/page.tsx)",
+      "Bash(git -C /Users/k1bfs/Downloads/lerini3 ls-files --error-unmatch LerniPlatfrom/src/app/cases/page.tsx)",
+      "Bash(git -C /Users/k1bfs/Downloads/lerini3 submodule status)",
+      "Bash(open /Users/k1bfs/Downloads/lerini3/Docs/LerniApp_Delivery_Guide.html)"
     ]
   }
 }

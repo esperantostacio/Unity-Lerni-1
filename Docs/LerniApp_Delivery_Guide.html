@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LerniApp — Project Delivery Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════
+   TOKENS
+═══════════════════════════════════ */
+:root {
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --navy:       #0B1628;
+  --navy-mid:   #132039;
+  --navy-muted: rgba(255,255,255,0.06);
+  --blue:       #3B82F6;
+  --blue-dim:   #1D4ED8;
+  --blue-soft:  #EFF6FF;
+  --blue-glow:  rgba(59,130,246,0.15);
+  --teal:       #0D9488;
+  --teal-soft:  #F0FDFA;
+  --amber:      #F59E0B;
+  --amber-soft: #FFFBEB;
+  --rose:       #F43F5E;
+  --rose-soft:  #FFF1F2;
+  --violet:     #7C3AED;
+  --violet-soft:#F5F3FF;
+  --emerald:    #10B981;
+  --emerald-soft:#ECFDF5;
+
+  --ink:        #0F172A;
+  --ink-2:      #1E293B;
+  --ink-3:      #334155;
+  --muted:      #64748B;
+  --subtle:     #94A3B8;
+  --line:       #E2E8F0;
+  --bg:         #F8FAFC;
+  --surface:    #FFFFFF;
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow:     0 4px 12px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg:  0 10px 32px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.04);
+
+  --radius:     12px;
+  --radius-sm:  8px;
+  --sidebar-w:  268px;
+}
+
+/* ═══════════════════════════════════
+   RESET + BASE
+═══════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--bg);
+  display: flex;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ═══════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════ */
+nav#sidebar {
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--navy);
+  position: fixed;
+  top: 0; left: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255,255,255,0.05);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+nav#sidebar::-webkit-scrollbar { width: 4px; }
+nav#sidebar::-webkit-scrollbar-track { background: transparent; }
+nav#sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+
+.nav-brand {
+  padding: 28px 22px 22px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.nav-brand .brand-mark {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.brand-dot {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--blue) 0%, #6366F1 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800; color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
+}
+.nav-brand h1 { font-size: 17px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+.nav-brand .sub { font-size: 11.5px; color: rgba(255,255,255,0.4); margin-top: 4px; line-height: 1.5; }
+
+.nav-group { padding: 10px 0 4px; }
+.nav-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  padding: 14px 22px 5px;
+}
+
+nav ul { list-style: none; }
+nav ul li a {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 22px;
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 450;
+  border-left: 2px solid transparent;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  line-height: 1.4;
+}
+nav ul li a .nav-icon { font-size: 13px; opacity: 0.7; width: 16px; text-align: center; }
+nav ul li a:hover {
+  color: rgba(255,255,255,0.88);
+  background: rgba(255,255,255,0.05);
+}
+nav ul li a.active {
+  color: #fff;
+  background: rgba(59,130,246,0.15);
+  border-left-color: var(--blue);
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════
+   MAIN LAYOUT
+═══════════════════════════════════ */
+main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 100px;
+}
+
+/* ═══════════════════════════════════
+   HERO
+═══════════════════════════════════ */
+.hero {
+  background: var(--navy);
+  padding: 64px 52px 56px;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -60px; left: 200px;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(59,130,246,0.15);
+  border: 1px solid rgba(59,130,246,0.3);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #93C5FD;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.hero-eyebrow::before { content: '●'; font-size: 8px; color: var(--blue); }
+.hero h2 {
+  font-size: 38px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -1px;
+  line-height: 1.15;
+  margin-bottom: 14px;
+}
+.hero h2 span {
+  background: linear-gradient(90deg, #60A5FA, #A78BFA);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero p {
+  font-size: 16px;
+  color: rgba(255,255,255,0.6);
+  max-width: 500px;
+  line-height: 1.7;
+  margin-bottom: 36px;
+}
+.hero-chips { display: flex; gap: 10px; flex-wrap: wrap; }
+.hero-chip {
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 500;
+}
+.hero-chip .chip-icon { font-size: 15px; }
+
+/* ═══════════════════════════════════
+   SECTION WRAPPERS
+═══════════════════════════════════ */
+.section-wrap {
+  padding: 28px 32px 0;
+  max-width: 920px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.card-header {
+  padding: 22px 28px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: flex-start; gap: 16px;
+}
+.ch-icon {
+  width: 42px; height: 42px; flex-shrink: 0;
+  border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px;
+}
+.ch-icon.blue   { background: var(--blue-soft);   }
+.ch-icon.teal   { background: var(--teal-soft);   }
+.ch-icon.amber  { background: var(--amber-soft);  }
+.ch-icon.violet { background: var(--violet-soft); }
+.ch-icon.rose   { background: var(--rose-soft);   }
+.ch-icon.emerald{ background: var(--emerald-soft);}
+.ch-icon.navy   { background: #EFF6FF; }
+.ch-text h3     { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: var(--ink); }
+.ch-text p      { font-size: 13.5px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+
+.card-body { padding: 24px 28px; }
+
+/* ═══════════════════════════════════
+   SECTION TITLE (before cards)
+═══════════════════════════════════ */
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--subtle);
+  margin-bottom: 12px;
+  padding-top: 8px;
+}
+
+/* ═══════════════════════════════════
+   TYPOGRAPHY
+═══════════════════════════════════ */
+h4.sub-heading {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 22px 0 10px;
+}
+h4.sub-heading:first-child { margin-top: 0; }
+
+p.body-text {
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: var(--ink-3);
+}
+
+/* ═══════════════════════════════════
+   CODE
+═══════════════════════════════════ */
+code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  background: #F1F5F9;
+  color: #1E40AF;
+  border: 1px solid #E2E8F0;
+  border-radius: 5px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+pre {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  background: var(--ink);
+  color: #CBD5E1;
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+  line-height: 1.65;
+  overflow-x: auto;
+  margin: 10px 0;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+pre .c   { color: #64748B; }
+pre .k   { color: #7DD3FC; }
+pre .s   { color: #86EFAC; }
+pre .n   { color: #FCD34D; }
+pre .url { color: #A78BFA; text-decoration: underline; }
+
+/* ═══════════════════════════════════
+   BADGES
+═══════════════════════════════════ */
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.badge-req  { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+.badge-opt  { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+.badge-auto { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+
+/* ═══════════════════════════════════
+   ALERTS
+═══════════════════════════════════ */
+.alert {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  line-height: 1.65;
+  margin: 14px 0;
+}
+.alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.alert strong { font-weight: 600; display: block; margin-bottom: 2px; }
+.alert-blue   { background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E3A5F; }
+.alert-green  { background: #ECFDF5; border: 1px solid #A7F3D0; color: #064E3B; }
+.alert-amber  { background: #FFFBEB; border: 1px solid #FDE68A; color: #78350F; }
+
+/* ═══════════════════════════════════
+   TABLES
+═══════════════════════════════════ */
+.table-wrap { border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--line); margin: 12px 0; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+thead tr { background: var(--bg); }
+th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #FAFBFC; }
+td strong { color: var(--ink); }
+td code { font-size: 12px; }
+
+/* ═══════════════════════════════════
+   STEPS
+═══════════════════════════════════ */
+.steps { display: flex; flex-direction: column; gap: 0; }
+.step {
+  display: flex; gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  align-items: flex-start;
+}
+.step:last-child { border-bottom: none; padding-bottom: 0; }
+.step-num {
+  width: 30px; height: 30px; flex-shrink: 0;
+  background: var(--blue);
+  color: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 1px;
+}
+.step-body h4 { font-size: 14.5px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.step-body p  { font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+.step-body ul { padding-left: 18px; margin-top: 6px; }
+.step-body li { font-size: 13px; color: var(--muted); margin-bottom: 4px; line-height: 1.6; }
+.step-body li strong { color: var(--ink-2); }
+
+/* ═══════════════════════════════════
+   EXPAND / COLLAPSE  (developer details)
+═══════════════════════════════════ */
+.dev-toggle {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: #F8FAFC;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue-dim);
+  cursor: pointer;
+  margin-top: 14px;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: var(--font);
+}
+.dev-toggle:hover {
+  background: var(--blue-soft);
+  border-color: #BFDBFE;
+}
+.dev-toggle svg {
+  transition: transform 0.25s;
+  flex-shrink: 0;
+}
+.dev-toggle.open svg { transform: rotate(180deg); }
+
+.dev-panel {
+  display: none;
+  margin-top: 14px;
+  background: #F8FAFC;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--ink-3);
+}
+.dev-panel.open { display: block; }
+.dev-panel h5 {
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--muted); margin-bottom: 10px;
+}
+.dev-panel table { font-size: 12.5px; }
+.dev-panel td, .dev-panel th { padding: 8px 12px; }
+
+/* ═══════════════════════════════════
+   WORKFLOW SECTION
+═══════════════════════════════════ */
+.flow-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  margin: 16px 0;
+}
+.flow-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 18px 16px;
+  position: relative;
+  background: var(--surface);
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.flow-card:hover {
+  box-shadow: var(--shadow);
+  border-color: #CBD5E1;
+}
+.flow-card .fc-number {
+  width: 24px; height: 24px;
+  background: var(--navy);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 10px;
+}
+.flow-card .fc-icon { font-size: 22px; margin-bottom: 8px; display: block; }
+.flow-card h4 { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 5px; }
+.flow-card p  { font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+
+.flow-connector {
+  display: flex; align-items: center;
+  color: var(--subtle);
+  font-size: 12px;
+  gap: 8px;
+  margin: 6px 0;
+  padding: 0 4px;
+}
+.flow-connector::before, .flow-connector::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.workflow-timeline {
+  position: relative;
+  padding-left: 32px;
+}
+.workflow-timeline::before {
+  content: '';
+  position: absolute;
+  left: 11px; top: 8px; bottom: 8px;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--blue), var(--violet));
+  border-radius: 2px;
+}
+.wt-item {
+  position: relative;
+  margin-bottom: 22px;
+}
+.wt-item:last-child { margin-bottom: 0; }
+.wt-dot {
+  position: absolute;
+  left: -24px; top: 4px;
+  width: 14px; height: 14px;
+  background: var(--surface);
+  border: 2px solid var(--blue);
+  border-radius: 50%;
+  z-index: 1;
+}
+.wt-item:nth-child(2) .wt-dot { border-color: #6366F1; }
+.wt-item:nth-child(3) .wt-dot { border-color: var(--teal); }
+.wt-item:nth-child(4) .wt-dot { border-color: var(--emerald); }
+.wt-item:nth-child(5) .wt-dot { border-color: var(--amber); }
+.wt-item:nth-child(6) .wt-dot { border-color: var(--violet); }
+.wt-item h4 { font-size: 14.5px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.wt-item p  { font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+
+/* ═══════════════════════════════════
+   ACCOUNT CARDS
+═══════════════════════════════════ */
+.account-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.acc-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.acc-header {
+  padding: 13px 16px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14.5px; font-weight: 700;
+  border-bottom: 1px solid var(--line);
+}
+.acc-body {
+  padding: 14px 16px;
+}
+.acc-body ol { padding-left: 18px; }
+.acc-body li { font-size: 13px; color: var(--muted); margin-bottom: 6px; line-height: 1.6; }
+.acc-body li strong { color: var(--ink-2); }
+
+/* ═══════════════════════════════════
+   ARCHITECTURE DIAGRAM
+═══════════════════════════════════ */
+.arch-canvas {
+  background: var(--ink);
+  border-radius: var(--radius-sm);
+  padding: 28px 24px;
+  border: 1px solid rgba(255,255,255,0.06);
+  overflow-x: auto;
+}
+.arch-canvas pre {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 12.5px;
+  color: #94A3B8;
+}
+
+/* ═══════════════════════════════════
+   DOWNLOAD CARDS
+═══════════════════════════════════ */
+.dl-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px 18px;
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
+  cursor: pointer;
+}
+.dl-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.09);
+  transform: translateY(-2px);
+}
+.dl-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+.dl-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 5px;
+}
+.dl-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.55;
+  flex: 1;
+  margin-bottom: 14px;
+}
+.dl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font);
+  padding: 7px 14px;
+  border-radius: 7px;
+  width: fit-content;
+}
+.dl-btn-dark  { background: var(--navy); color: #fff; }
+.dl-btn-amber { background: var(--amber); color: #fff; }
+
+/* ═══════════════════════════════════
+   LANGUAGE TOGGLE
+═══════════════════════════════════ */
+.lang-switcher {
+  position: fixed;
+  top: 16px; right: 20px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 4px;
+  box-shadow: var(--shadow);
+  gap: 2px;
+}
+.lang-btn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: var(--font);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  letter-spacing: 0.4px;
+  background: transparent;
+  color: var(--muted);
+}
+.lang-btn.active {
+  background: var(--navy);
+  color: #fff;
+}
+.lang-btn:hover:not(.active) {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* Translation visibility */
+.de-text { display: none; }
+.en-text { display: inline; }
+body.lang-de .de-text { display: inline; }
+body.lang-de .en-text { display: none; }
+/* block-level translatable elements */
+.de-block { display: none; }
+.en-block { display: block; }
+body.lang-de .de-block { display: block; }
+body.lang-de .en-block { display: none; }
+
+/* ═══════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════ */
+@media (max-width: 800px) {
+  nav#sidebar { display: none; }
+  main { margin-left: 0; }
+  .account-grid, .flow-grid { grid-template-columns: 1fr; }
+  .hero { padding: 40px 28px; }
+  .hero h2 { font-size: 28px; }
+  .card-body, .card-header { padding: 18px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Language toggle -->
+<div class="lang-switcher" role="group" aria-label="Language switch">
+  <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+  <button class="lang-btn" id="btn-de" onclick="setLang('de')">DE</button>
+</div>
+
+<!-- ════════════════════════════
+     SIDEBAR
+════════════════════════════ -->
+<nav id="sidebar">
+  <div class="nav-brand">
+    <div class="brand-mark">
+      <div class="brand-dot">L</div>
+      <h1>LerniApp</h1>
+    </div>
+    <div class="sub">Project Delivery Guide<br>June 2025 · Berlin</div>
+  </div>
+
+  <div class="nav-group">
+    <ul>
+      <li><a href="#overview"><span class="nav-icon">◈</span> Overview</a></li>
+      <li><a href="#downloads"><span class="nav-icon">↓</span> Downloads</a></li>
+      <li><a href="#workflow"><span class="nav-icon">⟳</span> How It Works</a></li>
+      <li><a href="#architecture"><span class="nav-icon">⬡</span> Architecture</a></li>
+    </ul>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Google Sheets</div>
+    <ul>
+      <li><a href="#sheets-setup"><span class="nav-icon">◻</span> Sheet Setup</a></li>
+      <li><a href="#csv-fields"><span class="nav-icon">≡</span> CSV Fields (25)</a></li>
+    </ul>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Unity App</div>
+    <ul>
+      <li><a href="#unity-install"><span class="nav-icon">▷</span> Installation</a></li>
+      <li><a href="#unity-config"><span class="nav-icon">⚙</span> Inspector Config</a></li>
+    </ul>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Web Platform</div>
+    <ul>
+      <li><a href="#vercel-deploy"><span class="nav-icon">↑</span> Deploy on Vercel</a></li>
+      <li><a href="#supabase-setup"><span class="nav-icon">⬡</span> RAG Storage</a></li>
+      <li><a href="#env-vars"><span class="nav-icon">⬢</span> Environment Variables</a></li>
+    </ul>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Accounts &amp; Code</div>
+    <ul>
+      <li><a href="#accounts"><span class="nav-icon">⊕</span> Required Accounts</a></li>
+      <li><a href="#source-code"><span class="nav-icon">◻</span> Source Code</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ════════════════════════════
+     MAIN
+════════════════════════════ -->
+<main>
+
+<!-- ── HERO ── -->
+<div class="hero" id="hero">
+  <div class="hero-eyebrow">
+    <span class="en-text">Project Handover · June 2025</span>
+    <span class="de-text">Projektübergabe · Juni 2025</span>
+  </div>
+  <h2>LerniApp<br><span>
+    <span class="en-text">Delivery Guide</span>
+    <span class="de-text">Übergabedokumentation</span>
+  </span></h2>
+  <p>
+    <span class="en-text">Everything your team needs to operate, configure, and grow the LerniApp German medical oral exam training platform.</span>
+    <span class="de-text">Alles, was Ihr Team braucht, um die LerniApp-Plattform für die medizinische Sprachprüfung (FSP) zu betreiben, zu konfigurieren und weiterzuentwickeln.</span>
+  </p>
+  <div class="hero-chips">
+    <div class="hero-chip"><span class="chip-icon">🎮</span> Unity XR App</div>
+    <div class="hero-chip"><span class="chip-icon">📊</span> Google Sheets CSV</div>
+    <div class="hero-chip"><span class="chip-icon">🌐</span> Next.js Web Platform</div>
+    <div class="hero-chip"><span class="chip-icon">🤖</span> OpenAI GPT-4o</div>
+    <div class="hero-chip"><span class="chip-icon">🇩🇪</span> German FSP Exam</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     OVERVIEW
+════════════════════════════ -->
+<div class="section-wrap" id="overview">
+  <p class="section-title">Start Here</p>
+  <div class="card">
+    <div class="card-header">
+      <div class="ch-icon blue">◈</div>
+      <div class="ch-text">
+        <h3>
+          <span class="en-text">What Was Built</span>
+          <span class="de-text">Was wurde entwickelt</span>
+        </h3>
+        <p>
+          <span class="en-text">A complete AI-powered platform for German medical licensing exam preparation</span>
+          <span class="de-text">Eine vollständige KI-gestützte Plattform zur Vorbereitung auf die deutsche Fachsprachenprüfung (FSP)</span>
+        </p>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="body-text">
+        LerniApp trains doctors preparing for the German <strong>Fachsprachenprüfung (FSP)</strong> — the medical language exam required for foreign doctors to practice in Germany. The system simulates two exam formats: <strong>D2D</strong> (Doctor to Doctor — presenting a case to a senior physician) and <strong>D2P</strong> (Doctor to Patient — taking a medical history). After each session the AI evaluates the candidate across five dimensions and gives scored feedback in German.
+      </p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:20px 0;">
+        <div style="border:1px solid var(--line);border-radius:10px;padding:18px;background:var(--bg);">
+          <div style="font-size:24px;margin-bottom:10px;">🎮</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:5px;">Unity XR App</div>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">3D exam simulator. Candidate speaks, AI avatar responds in German, evaluation is displayed after the session.</div>
+        </div>
+        <div style="border:1px solid var(--line);border-radius:10px;padding:18px;background:var(--bg);">
+          <div style="font-size:24px;margin-bottom:10px;">📊</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:5px;">Google Sheets CSV</div>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">Single source of truth for all scenarios, AI prompts, and medical cases. Edit the sheet — no rebuild needed.</div>
+        </div>
+        <div style="border:1px solid var(--line);border-radius:10px;padding:18px;background:var(--bg);">
+          <div style="font-size:24px;margin-bottom:10px;">🌐</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:5px;">Web Platform</div>
+          <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">Next.js dashboard for uploading medical documents, managing the AI knowledge base, and editing scenarios.</div>
+        </div>
+      </div>
+
+      <div class="alert alert-blue">
+        <div class="alert-icon">💡</div>
+        <div><strong>How they connect</strong> Google Sheets is the control panel. Unity reads it on startup. The web platform writes back to it via Google Apps Script. The web platform also runs a built-in RAG pipeline that stores medical knowledge as local JSON files — Unity fetches these as a "bundle" to inject context into the AI prompts.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     DOWNLOADS
+════════════════════════════ -->
+<div class="section-wrap" id="downloads">
+  <p class="section-title">Source Code &amp; Files</p>
+  <div class="card">
+    <div class="card-header">
+      <div class="ch-icon blue">↓</div>
+      <div class="ch-text">
+        <h3>Download Everything</h3>
+        <p>All three deliverables — click to open in a new tab</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+
+        <a href="https://github.com/Maher-Guerfali/lernime" target="_blank" rel="noopener" class="dl-card">
+          <div class="dl-icon" style="background:#EFF6FF;">🎮</div>
+          <div class="dl-label">Unity App</div>
+          <div class="dl-desc">Full Unity project · C# source · 3D scene · all assets</div>
+          <div class="dl-btn dl-btn-dark">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            GitHub ↗
+          </div>
+        </a>
+
+        <a href="https://github.com/Maher-Guerfali/LerniWebsite" target="_blank" rel="noopener" class="dl-card">
+          <div class="dl-icon" style="background:#ECFDF5;">🌐</div>
+          <div class="dl-label">Web Platform</div>
+          <div class="dl-desc">Next.js dashboard · RAG pipeline · Google Sheets · Vercel-ready</div>
+          <div class="dl-btn dl-btn-dark">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            GitHub ↗
+          </div>
+        </a>
+
+        <a href="https://files.fm/u/7dst3vaxqu" target="_blank" rel="noopener" class="dl-card">
+          <div class="dl-icon" style="background:#FFFBEB;">📊</div>
+          <div class="dl-label">CSV / Google Sheet</div>
+          <div class="dl-desc">All 25-column scenario data · master content file · all exam cases</div>
+          <div class="dl-btn dl-btn-amber">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download ↗
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     WORKFLOW
+════════════════════════════ -->
+<div class="section-wrap" id="workflow">
+  <p class="section-title">How It Works</p>
+  <div class="card">
+    <div class="card-header">
+      <div class="ch-icon teal">⟳</div>
+      <div class="ch-text">
+        <h3>
+          <span class="en-text">Workflow — Day to Day</span>
+          <span class="de-text">Arbeitsablauf — Tägliche Nutzung</span>
+        </h3>
+        <p>
+          <span class="en-text">Brief overview of how everything runs from setup to a live exam session</span>
+          <span class="de-text">Kurzübersicht: Von der Einrichtung bis zur Live-Prüfungssitzung</span>
+        </p>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <!-- Brief flow cards — everyone reads these -->
+      <h4 class="sub-heading">
+        <span class="en-text">The two workflows you'll use</span>
+        <span class="de-text">Die zwei Arbeitsabläufe im Überblick</span>
+      </h4>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;">
+        <div style="border:1px solid #BFDBFE;border-radius:10px;padding:18px;background:#EFF6FF;">
+          <div style="font-size:13px;font-weight:700;color:var(--blue-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">
+            🔧 <span class="en-text">Configuring a New Scenario</span><span class="de-text">Neues Szenario anlegen</span>
+          </div>
+          <div style="font-size:13px;color:var(--ink-3);line-height:1.7;">
+            <span class="en-text">Open Google Sheet → add a new row → fill in the case details (scenario name, medical terms, AI prompt text) → Save. The next time Unity starts, it automatically picks up the new scenario. No code change needed.</span>
+            <span class="de-text">Google Sheet öffnen → neue Zeile hinzufügen → Falldetails ausfüllen (Szenarioname, Fachbegriffe, KI-Prompttext) → Speichern. Beim nächsten Start lädt Unity das neue Szenario automatisch. Keine Codeänderung notwendig.</span>
+          </div>
+        </div>
+        <div style="border:1px solid #A7F3D0;border-radius:10px;padding:18px;background:#ECFDF5;">
+          <div style="font-size:13px;font-weight:700;color:#065F46;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">
+            🩺 <span class="en-text">Running an Exam Session</span><span class="de-text">Prüfungssitzung starten</span>
+          </div>
+          <div style="font-size:13px;color:var(--ink-3);line-height:1.7;">
+            <span class="en-text">Open Unity app → select D2D or D2P → speak in German → AI responds as examiner or patient → session ends → scored evaluation appears (5 dimensions, total out of 20).</span>
+            <span class="de-text">Unity-App starten → D2D oder D2P auswählen → auf Deutsch sprechen → KI antwortet als Prüfer oder Patient → Sitzung endet → Bewertung erscheint (5 Dimensionen, gesamt /20).</span>
+          </div>
+        </div>
+      </div>
+
+      <h4 class="sub-heading">
+        <span class="en-text">Step-by-step session flow</span>
+        <span class="de-text">Ablauf einer Prüfungssitzung</span>
+      </h4>
+
+      <div class="workflow-timeline">
+        <div class="wt-item">
+          <div class="wt-dot"></div>
+          <h4><span class="en-text">App starts — loads scenario data</span><span class="de-text">App startet — lädt Szenariodaten</span></h4>
+          <p><span class="en-text">Unity fetches the Google Sheets CSV over the internet. All scenario prompts, medical terms, and AI instructions are loaded into memory. This takes 1–3 seconds on first launch.</span><span class="de-text">Unity lädt die Google-Sheets-CSV über das Internet. Alle Szenario-Prompts, Fachbegriffe und KI-Anweisungen werden in den Arbeitsspeicher geladen. Dies dauert beim ersten Start 1–3 Sekunden.</span></p>
+        </div>
+        <div class="wt-item">
+          <div class="wt-dot"></div>
+          <h4><span class="en-text">Candidate selects exam type</span><span class="de-text">Kandidat wählt Prüfungstyp</span></h4>
+          <p><span class="en-text">The candidate taps <em>D2D</em> (present a case to a professor) or <em>D2P</em> (take history from a patient). The 3D avatar and countdown timer appear.</span><span class="de-text">Der Kandidat wählt <em>D2D</em> (Arzt-Arzt-Gespräch, Fall vorstellen) oder <em>D2P</em> (Arzt-Patienten-Gespräch, Anamnese). Der 3D-Avatar und der Countdown-Timer erscheinen.</span></p>
+        </div>
+        <div class="wt-item">
+          <div class="wt-dot"></div>
+          <h4><span class="en-text">Live conversation begins</span><span class="de-text">Live-Gespräch beginnt</span></h4>
+          <p><span class="en-text">The candidate speaks German into the microphone. Audio is streamed to the <strong>OpenAI Realtime API</strong>, which responds as the AI character in real-time. No delay — it feels like a real conversation.</span><span class="de-text">Der Kandidat spricht Deutsch ins Mikrofon. Das Audio wird an die <strong>OpenAI Realtime API</strong> gestreamt, die in Echtzeit als KI-Charakter antwortet. Keine Verzögerung — wie ein echtes Gespräch.</span></p>
+        </div>
+        <div class="wt-item">
+          <div class="wt-dot"></div>
+          <h4><span class="en-text">Pronunciation is scored each turn</span><span class="de-text">Aussprache wird jede Runde bewertet</span></h4>
+          <p><span class="en-text">Each spoken sentence is also sent to <strong>Azure Cognitive Services</strong> which scores German pronunciation accuracy, fluency, and completeness. Results are shown turn-by-turn.</span><span class="de-text">Jeder gesprochene Satz wird zusätzlich an <strong>Azure Cognitive Services</strong> gesendet, das Genauigkeit, Flüssigkeit und Vollständigkeit der deutschen Aussprache bewertet. Ergebnisse werden rundenweise angezeigt.</span></p>
+        </div>
+        <div class="wt-item">
+          <div class="wt-dot"></div>
+          <h4><span class="en-text">Exam ends — evaluation is generated</span><span class="de-text">Prüfung endet — Bewertung wird erstellt</span></h4>
+          <p><span class="en-text">When the timer runs out (or the candidate says the closing phrase), the full conversation transcript is sent to <strong>GPT-4o</strong> which produces a structured JSON evaluation scoring: Communication, Comprehension, Structure, Empathy, and Completeness — total out of 20.</span><span class="de-text">Wenn der Timer abläuft (oder der Kandidat den Abschlussatz sagt), wird das vollständige Gesprächsprotokoll an <strong>GPT-4o</strong> gesendet. Es erstellt eine strukturierte JSON-Bewertung: Kommunikation, Verständnis, Struktur, Empathie und Vollständigkeit — gesamt /20.</span></p>
+        </div>
+        <div class="wt-item">
+          <div class="wt-dot"></div>
+          <h4><span class="en-text">Feedback is displayed and spoken aloud</span><span class="de-text">Feedback wird angezeigt und vorgelesen</span></h4>
+          <p><span class="en-text">The evaluation appears on screen and is read aloud by the AI avatar using <strong>OpenAI TTS</strong> (or ElevenLabs German voices). The candidate hears and reads their scores and specific suggestions for improvement.</span><span class="de-text">Die Bewertung erscheint auf dem Bildschirm und wird vom KI-Avatar mit <strong>OpenAI TTS</strong> (oder ElevenLabs-Deutschen Stimmen) vorgelesen. Der Kandidat hört und liest seine Punktzahlen und Verbesserungsvorschläge.</span></p>
+        </div>
+      </div>
+
+      <!-- Developer details toggle -->
+      <button class="dev-toggle" onclick="toggleDev(this)">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Developer details — data flow &amp; APIs
+      </button>
+      <div class="dev-panel">
+        <h5>Data Flow (Technical)</h5>
+        <div class="table-wrap" style="margin-bottom:14px;">
+          <table>
+            <thead><tr><th>Step</th><th>What happens under the hood</th><th>Service</th></tr></thead>
+            <tbody>
+              <tr><td>Startup</td><td><code>RemotePromptManager.cs</code> calls <code>UnityWebRequest.Get(csvUrl)</code>. Parses CSV, applies locale filter. Falls back to cached copy if offline.</td><td>Google Sheets (public CSV)</td></tr>
+              <tr><td>RAG context</td><td>Unity requests RAG bundle from <code>/api/backendlerni/rag/bundles/</code>. The server reads pre-built JSON files from the <code>.backendlerni/</code> folder (local filesystem). Returns relevant medical facts injected into the system prompt.</td><td>Web Platform (local files)</td></tr>
+              <tr><td>Realtime conv.</td><td><code>OpenAIRealtimeClient.cs</code> opens a WebSocket to <code>wss://api.openai.com/v1/realtime</code>. Streams PCM audio both ways.</td><td>OpenAI Realtime API</td></tr>
+              <tr><td>Pronunciation</td><td>Each turn's audio buffer is POSTed to Azure Speech <code>/pronunciation-assessment</code>. Returns AccuracyScore, FluencyScore, ProsodyScore per word.</td><td>Azure Cognitive Services</td></tr>
+              <tr><td>Evaluation</td><td>Full transcript sent to <code>gpt-4o</code> via standard Chat Completions. System prompt from the <code>eval.one_call.*.system</code> CSV key. Response is JSON parsed into <code>ExamEvaluation.cs</code>.</td><td>OpenAI Chat API</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h5>Key placeholders in the CSV text field</h5>
+        <pre><code class="n">{CASE_TITLE}</code>       <span class="c">→ filled with scenario_name at runtime</span>
+<code class="n">{CASE_TERMS}</code>       <span class="c">→ filled with the terms column (comma list)</span>
+<code class="n">{CASE_TERMS_JSON}</code>  <span class="c">→ filled with terms_storage_json column</span>
+<code class="n">{COMBINED_INPUT}</code>   <span class="c">→ the full conversation transcript for evaluation</span></pre>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     ARCHITECTURE
+════════════════════════════ -->
+<div class="section-wrap" id="architecture">
+  <div class="card">
+    <div class="card-header">
+      <div class="ch-icon violet">⬡</div>
+      <div class="ch-text">
+        <h3>System Architecture</h3>
+        <p>How all three components connect at runtime</p>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <!-- Quick visual -->
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+        <div style="background:var(--navy);color:#7DD3FC;font-family:var(--mono);font-size:12.5px;padding:8px 14px;border-radius:8px;">Unity App</div>
+        <div style="color:var(--subtle);font-size:20px;">⇄</div>
+        <div style="background:#FFFBEB;color:#92400E;font-family:var(--mono);font-size:12.5px;padding:8px 14px;border-radius:8px;border:1px solid #FDE68A;">Google Sheets</div>
+        <div style="color:var(--subtle);font-size:20px;">⇄</div>
+        <div style="background:#EFF6FF;color:#1D4ED8;font-family:var(--mono);font-size:12.5px;padding:8px 14px;border-radius:8px;border:1px solid #BFDBFE;">Web Platform</div>
+        <div style="color:var(--subtle);font-size:20px;">⇄</div>
+        <div style="background:#F8FAFC;color:#334155;font-family:var(--mono);font-size:12.5px;padding:8px 14px;border-radius:8px;border:1px solid #CBD5E1;">.backendlerni/ (local JSON)</div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Service</th><th>Purpose</th><th>Required?</th></tr></thead>
+          <tbody>
+            <tr><td><strong>OpenAI</strong> (GPT-4o Realtime)</td><td>Live AI conversation + exam evaluation scoring + TTS voices + embeddings</td><td><span class="badge badge-req">Required</span></td></tr>
+            <tr><td><strong>Google Sheets</strong></td><td>All scenario &amp; prompt configuration — the content management system</td><td><span class="badge badge-req">Required</span></td></tr>
+            <tr><td><strong>Vercel</strong></td><td>Hosting for the Next.js web platform</td><td><span class="badge badge-req">Required</span></td></tr>
+            <tr><td><strong>Local file storage</strong> (<code>.backendlerni/</code>)</td><td>RAG pipeline stores medical content as JSON files on the server. On Vercel, attach a persistent disk or use Render instead.</td><td><span class="badge badge-req">Required</span></td></tr>
+            <tr><td><strong>Supabase</strong></td><td>Optional PostgreSQL database — used only by the PDF document upload feature, not by the main RAG pipeline Unity reads.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+            <tr><td><strong>Azure Cognitive Services</strong></td><td>Detailed German pronunciation scoring (AccuracyScore, FluencyScore per word)</td><td><span class="badge badge-opt">Optional</span></td></tr>
+            <tr><td><strong>ElevenLabs</strong></td><td>High-quality German TTS voices as an alternative to OpenAI TTS</td><td><span class="badge badge-opt">Optional</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <button class="dev-toggle" onclick="toggleDev(this)">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Full architecture diagram (ASCII)
+      </button>
+      <div class="dev-panel">
+        <pre style="font-size:11.5px;line-height:1.75;">
+┌─────────────────────────────── UNITY XR APP ──────────────────────────────┐
+│                                                                            │
+│  RemotePromptManager ◄──── HTTP GET ─────── Google Sheets (public CSV)   │
+│         │                                                                  │
+│         │ prompts + case data                                              │
+│         ▼                                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────┐  │
+│  │           OpenAI Realtime API  (wss://api.openai.com/v1/realtime)   │  │
+│  │       Candidate mic audio  ←→  AI speech response (GPT-4o)         │  │
+│  └────────────────┬──────────────────────────────┬──────────────────┘  │
+│                   │ audio per turn                │ transcript at end    │
+│                   ▼                               ▼                      │
+│     Azure Speech Pronunciation          GPT-4o Evaluation Engine         │
+│     (AccuracyScore, FluencyScore)       (JSON: 5 dims + total /20)       │
+└────────────────────────────────────────────────────────────────────────────┘
+                              ↕ RAG bundle (medical context)
+┌──────────────────────────── WEB PLATFORM (Vercel) ────────────────────────┐
+│                                                                            │
+│  Dashboard → Add text/cases → OpenAI Embeddings → .backendlerni/ (JSON)   │
+│  Dashboard → Upload PDFs → (optional) Supabase pgvector storage           │
+│                                                                            │
+│  Edit Sheet button → Google Apps Script → Google Sheets (writes rows)    │
+│                                                                            │
+│  /api/backendlerni/rag/bundles → returns relevant context JSON to Unity   │
+└────────────────────────────────────────────────────────────────────────────┘</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     GOOGLE SHEETS SETUP
+════════════════════════════ -->
+<div class="section-wrap" id="sheets-setup">
+  <p class="section-title">Google Sheets</p>
+  <div class="card">
+    <div class="card-header">
+      <div class="ch-icon amber">📊</div>
+      <div class="ch-text">
+        <h3>Sheet Setup</h3>
+        <p>Publish the spreadsheet as a public CSV so Unity and the web platform can read it</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-green">
+        <div class="alert-icon">✅</div>
+        <div><strong>Already configured.</strong> The sheet is live. Use these steps if you need to set up a fresh copy or transfer ownership.</div>
+      </div>
+
+      <h4 class="sub-heading">How to publish as a public CSV</h4>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Open your Google Sheet</h4>
+            <p>Make sure the prompt data is on a tab named <code>Sheet1</code>. Keep the first row as the header (the 25 column names).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Publish to the web as CSV</h4>
+            <p>Click <strong>File → Share → Publish to web</strong>. Select the sheet tab. Set the format to <strong>Comma-separated values (.csv)</strong>. Click <strong>Publish</strong>.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Copy the published URL</h4>
+            <p>Google gives you a URL starting with <code>https://docs.google.com/spreadsheets/d/e/...</code>. This is your <code>CSV_PUBLIC_URL</code> — paste it into both Unity and Vercel env vars.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Set up Apps Script (so the web platform can write back)</h4>
+            <p>In the sheet go to <strong>Extensions → Apps Script</strong>. Paste the script from the repo (see <code>LerniPlatfrom/BACKENDLERNI_README.md</code>). Deploy as Web App — execute as yourself, accessible to anyone. Copy the deploy URL → this is your <code>APPS_SCRIPT_URL</code>.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-amber" style="margin-top:16px;">
+        <div class="alert-icon">⚠️</div>
+        <div>After editing any row, Unity picks up the changes next time the app is opened. No rebuild needed.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     CSV FIELDS
+════════════════════════════ -->
+<div class="section-wrap" id="csv-fields">
+  <div class="card">
+    <div class="card-header">
+      <div class="ch-icon navy">≡</div>
+      <div class="ch-text">
+        <h3>CSV Fields — All 25 Columns</h3>
+        <p>Each row in the sheet is one scenario record. These 25 columns control everything the AI does.</p>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <p class="body-text" style="margin-bottom:16px;">
+        The five most important columns are <code>key</code>, <code>enabled</code>, <code>text</code>, <code>terms</code>, and <code>core_facts</code>. The rest add extra context and voice preferences. All optional columns have safe defaults if left blank.
+      </p>
+
+      <!-- Core columns — always visible -->
+      <h4 class="sub-heading">🔑 Essential columns (always fill these)</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Column</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr>
+              <td style="color:var(--subtle);font-size:12px;">1</td>
+              <td><code>key</code></td>
+              <td>Unique identifier for this row. Unity looks prompts up by key. Example: <code>eval.one_call.d2d.system</code></td>
+            </tr>
+            <tr>
+              <td style="color:var(--subtle);font-size:12px;">2</td>
+              <td><code>locale</code></td>
+              <td>Language: <code>de-DE</code> for German, <code>en-US</code> for English, <code>*</code> to match any language.</td>
+            </tr>
+            <tr>
+              <td style="color:var(--subtle);font-size:12px;">3</td>
+              <td><code>enabled</code></td>
+              <td><code>TRUE</code> or <code>FALSE</code>. Set to <code>FALSE</code> to temporarily hide a scenario without deleting it.</td>
+            </tr>
+            <tr>
+              <td style="color:var(--subtle);font-size:12px;">5</td>
+              <td><code>text</code></td>
+              <td>The actual instructions sent to the AI. This is the most powerful column — it defines the AI's personality, role, and scoring rules. Can use placeholders like <code>{CASE_TITLE}</code>.</td>
+            </tr>
+            <tr>
+              <td style="color:var(--subtle);font-size:12px;">20</td>
+              <td><code>terms</code></td>
+              <td>Comma-separated key German medical terms. The evaluator checks that the candidate used these. Example: <code>NSTEMI, Troponin T, ST-Senkung</code></td>
+            </tr>
+            <tr>
+              <td style="color:var(--subtle);font-size:12px;">22</td>
+              <td><code>core_facts</code></td>
+              <td>The essential clinical facts the candidate must communicate. This is the "answer key" the AI uses to score completeness.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- All 25 — behind toggle -->
+      <button class="dev-toggle" onclick="toggleDev(this)">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Show all 25 columns with full descriptions
+      </button>
+      <div class="dev-panel">
+        <h5>Complete column reference</h5>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Column</th><th>Description</th><th>Type</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><code>key</code></td><td>Unique prompt key. Unity looks this up at runtime.</td><td><span class="badge badge-req">Required</span></td></tr>
+              <tr><td>2</td><td><code>locale</code></td><td>Language code: <code>de-DE</code>, <code>en-US</code>, or <code>*</code> for all.</td><td><span class="badge badge-req">Required</span></td></tr>
+              <tr><td>3</td><td><code>enabled</code></td><td>TRUE/FALSE. FALSE rows are ignored by Unity.</td><td><span class="badge badge-req">Required</span></td></tr>
+              <tr><td>4</td><td><code>version</code></td><td>Number. If two rows share the same key + locale, the higher version wins.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>5</td><td><code>text</code></td><td>The prompt sent to the AI. Supports placeholders: <code>{CASE_TITLE}</code>, <code>{CASE_TERMS}</code>, <code>{COMBINED_INPUT}</code>.</td><td><span class="badge badge-req">Required</span></td></tr>
+              <tr><td>6</td><td><code>scenario_id</code></td><td>Internal ID linking rows to a case. All rows for the same case share this. Example: <code>fsp_fall_1</code></td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>7</td><td><code>scenario_name</code></td><td>Human-readable name shown in Unity UI. Example: <code>FSP Fall 1 — NSTEMI</code></td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>8</td><td><code>scenario_context</code></td><td>Short 2–4 sentence clinical summary of the case. Gives the AI background context.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>9</td><td><code>topic_d2d</code></td><td>Medical topic for the Doctor-to-Doctor conversation. Example: <code>NSTEMI — Acute Coronary Syndrome</code></td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>10</td><td><code>topic_d2p</code></td><td>Medical topic for the Doctor-to-Patient conversation.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>11</td><td><code>rag_tags</code></td><td>Comma-separated tags used to filter matching content from the RAG bundle. When Unity fetches the bundle, only chunks whose tags match these are injected into the prompt. Example: <code>NSTEMI,cardiology,troponin</code></td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>12</td><td><code>voice_welcome_d2d</code></td><td>OpenAI or ElevenLabs voice ID for the D2D welcome audio.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>13</td><td><code>voice_welcome_d2p</code></td><td>Voice ID for D2P welcome audio.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>14</td><td><code>voice_realtime_d2d</code></td><td>Voice for the live D2D AI conversation. Options: <code>alloy</code>, <code>shimmer</code>, <code>verse</code>, <code>coral</code>, <code>sage</code>.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>15</td><td><code>voice_realtime_d2p</code></td><td>Voice for the live D2P AI conversation (the patient character).</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>16</td><td><code>voice_eval_female</code></td><td>Voice for reading evaluation feedback with a female avatar.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>17</td><td><code>voice_eval_male</code></td><td>Voice for reading evaluation feedback with a male avatar.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>18</td><td><code>theme</code></td><td>Category tag for grouping. Example: <code>cardiology</code>, <code>neurology</code>, <code>emergency</code>.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>19</td><td><code>duration_minutes</code></td><td>Exam length in minutes. Unity shows a countdown timer. Example: <code>20</code></td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>20</td><td><code>terms</code></td><td>Comma-separated key German medical terms. Used as vocabulary hints and by the evaluator for completeness scoring.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>21</td><td><code>terms_storage_json</code></td><td>Same terms as col 20 but as JSON array. Example: <code>["NSTEMI","Troponin T"]</code>. Used for structured evaluation output.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>22</td><td><code>core_facts</code></td><td>Essential clinical facts the candidate must mention. The AI uses this as the answer key for grading completeness.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>23</td><td><code>expected_questions</code></td><td>Typical examiner opening lines, separated by <code>|</code>. Helps the AI start naturally.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>24</td><td><code>evaluation_focus</code></td><td>Free-text instruction to the evaluator AI on what to pay special attention to during scoring.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+              <tr><td>25</td><td><code>cases_json</code></td><td>Full case data as JSON — all clinical details, lab results, differential diagnosis. The most complete case representation.</td><td><span class="badge badge-opt">Optional</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="alert alert-blue" style="margin-top:12px;">
+          <div class="alert-icon">💡</div>
+          <div><strong>To add a new scenario:</strong> Copy an existing row. Change <code>scenario_id</code>, <code>scenario_name</code>, <code>text</code>, <code>terms</code>, and <code>core_facts</code>. Set <code>enabled</code> = TRUE. Unity loads it on next startup.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     UNITY INSTALL
+════════════════════════════ -->
+<div class="section-wrap" id="unity-install">
+  <p class="section-title">Unity App</p>
+  <div class="card">
+    <div class="card-header">
+      <div class="ch-icon rose">▷</div>
+      <div class="ch-text">
+        <h3>Unity App — Installation</h3>
+        <p>Open the project, install packages, and run it in under 15 minutes</p>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <div class="alert alert-blue">
+        <div class="alert-icon">ℹ️</div>
+        <div><strong>Requirements:</strong> Unity 6 (6000.x LTS) · A microphone · Internet connection at runtime</div>
+      </div>
+
+      <h4 class="sub-heading">Setup steps</h4>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Clone the Unity repository</h4>
+            <p>Use Git (not a ZIP download — the project uses Git LFS for large 3D assets):</p>
+            <pre>git clone https://github.com/Maher-Guerfali/lernime.git</pre>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Open in Unity Hub</h4>
+            <p>Open Unity Hub → <strong>Add → Add project from disk</strong> → select the cloned folder. Unity Hub detects the correct editor version automatically.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Wait for package compilation (5–10 min)</h4>
+            <p>Unity downloads and compiles all packages on first open. Do not close during this step.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Open the main scene</h4>
+            <p>In the Project window navigate to <code>Assets/Samples/OpenAI/PCAConversationalAISample/</code> and double-click <code>PCAConversationalAISample.unity</code>.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h4>Enter API keys in the Inspector (next section)</h4>
+            <p>Select GameObjects in the Hierarchy and fill in the required fields as described below.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <h4>Press Play to test</h4>
+            <p>Click the ▶ Play button. The app connects to OpenAI and fetches Google Sheets. You should hear the AI welcome message within a few seconds.</p>
+          </div>
+        </div>
+      </div>
+
+      <button class="dev-toggle" onclick="toggleDev(this)">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Build for PC / Quest 3
+      </button>
+      <div class="dev-panel">
+        <h5>Creating a release build</h5>
+        <p style="margin-bottom:10px;">Go to <strong>File → Build Settings</strong>. Select your platform:</p>
+        <ul style="padding-left:18px;margin-bottom:10px;">
+          <li style="margin-bottom:6px;"><strong>Windows PC standalone</strong> — select Windows x86_64, click Build. Share the resulting folder with users; run the <code>.exe</code>.</li>
+          <li><strong>Meta Quest 3</strong> — switch platform to Android, select <em>Oculus</em> as XR plugin, connect Quest via USB, click Build and Run.</li>
+        </ul>
+        <p>All API keys baked into the scene file are included in the build. Use a private repo or a git-ignored config asset to avoid leaking them.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     UNITY CONFIG
+════════════════════════════ -->
+<div class="section-wrap" id="unity-config">
+  <div class="card">
+    <div class="card-header">
+      <div class="ch-icon amber">⚙</div>
+      <div class="ch-text">
+        <h3>Unity Inspector — Fields to Fill In</h3>
+        <p>All configuration is done through the Unity Inspector — no code editing needed</p>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <div class="alert alert-amber">
+        <div class="alert-icon">⚠️</div>
+        <div><strong>Security:</strong> API keys in the Inspector are stored in the scene file. Keep the repository private. Never commit keys to a public GitHub repo.</div>
+      </div>
+
+      <h4 class="sub-heading">1 · OpenAI Realtime Client</h4>
+      <p style="font-size:13.5px;color:var(--muted);margin-bottom:10px;">Select the <strong>RealtimeConversationManager</strong> GameObject in the Hierarchy.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Inspector Field</th><th>What to enter</th></tr></thead>
+          <tbody>
+            <tr><td><code>Api Key</code></td><td>Your OpenAI API key — starts with <code>sk-proj-...</code></td></tr>
+            <tr><td><code>Model</code></td><td>Leave as <code>gpt-4o-realtime-preview</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 class="sub-heading">2 · Remote Prompt Manager (Google Sheets)</h4>
+      <p style="font-size:13.5px;color:var(--muted);margin-bottom:10px;">Find the <strong>RemotePromptManager</strong> component.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Inspector Field</th><th>What to enter</th></tr></thead>
+          <tbody>
+            <tr><td><code>Remote Enabled</code></td><td>✔ Tick this to enable live loading from Google Sheets</td></tr>
+            <tr><td><code>Csv Url</code></td><td>The published Google Sheets CSV URL (from Sheet Setup step 3)</td></tr>
+            <tr><td><code>Locale</code></td><td><code>de-DE</code> for German or <code>*</code> to load all locales</td></tr>
+            <tr><td><code>Strict Online Only</code></td><td>Leave unchecked — allows fallback to cached CSV when offline</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4 class="sub-heading">3 · Azure Pronunciation Service <span style="font-size:12px;font-weight:400;color:var(--muted)">(optional)</span></h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Inspector Field</th><th>What to enter</th></tr></thead>
+          <tbody>
+            <tr><td><code>Subscription Key</code></td><td>Your Azure Cognitive Services Speech key</td></tr>
+            <tr><td><code>Region</code></td><td><code>westeurope</code> (or match your Azure resource region)</td></tr>
+            <tr><td><code>Language</code></td><td><code>de-DE</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <button class="dev-toggle" onclick="toggleDev(this)">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        ElevenLabs TTS fields (optional German voices)
+      </button>
+      <div class="dev-panel">
+        <h5>ElevenLabsTTS component</h5>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Field</th><th>What to enter</th></tr></thead>
+            <tbody>
+              <tr><td><code>Api Key</code></td><td>Your ElevenLabs API key</td></tr>
+              <tr><td><code>Female Voice Doctor To Doctor</code></td><td>ElevenLabs voice ID for the D2D female professor</td></tr>
+              <tr><td><code>Female Voice Doctor To Patient</code></td><td>ElevenLabs voice ID for the D2P patient character</td></tr>
+              <tr><td><code>Model</code></td><td>Leave as <code>tts-1</code> or upgrade to <code>eleven_multilingual_v2</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);margin-top:8px;">If ElevenLabs key is blank, Unity automatically falls back to OpenAI TTS voices.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     VERCEL DEPLOY
+════════════════════════════ -->
+<div class="section-wrap" id="vercel-deploy">
+  <p class="section-title">Web Platform</p>
+  <div class="card">
+    <div class="card-header">
+      <div class="ch-icon teal">↑</div>
+      <div class="ch-text">
+        <h3>Deploy on Vercel</h3>
+        <p>Host the Next.js dashboard in under 5 minutes — free tier is sufficient</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Create a Vercel account</h4>
+            <p>Go to <strong>vercel.com</strong> → <strong>Sign Up → Continue with GitHub</strong>. Choose the free <em>Hobby</em> plan.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Import the repository</h4>
+            <p>Dashboard → <strong>Add New → Project → Import Git Repository</strong>. Select the LerniPlatform GitHub repo.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Add environment variables before deploying</h4>
+            <p>Expand the <strong>Environment Variables</strong> section. Add all the variables from the <a href="#env-vars" style="color:var(--blue);">Environment Variables section</a> of this guide. Do this <em>before</em> clicking Deploy.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Click Deploy</h4>
+            <p>Vercel builds in ~2 minutes. You get a URL like <code>lerniplatform.vercel.app</code>. You can set a custom domain later in Project Settings.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-green" style="margin-top:16px;">
+        <div class="alert-icon">✅</div>
+        <div><strong>Auto-deploy:</strong> After initial setup, every push to the <code>main</code> branch of your GitHub repo automatically rebuilds and redeploys the platform. No manual steps.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     RAG / BACKENDLERNI STORAGE
+════════════════════════════ -->
+<div class="section-wrap" id="supabase-setup">
+  <div class="card">
+    <div class="card-header">
+      <div class="ch-icon emerald">⬡</div>
+      <div class="ch-text">
+        <h3>RAG Storage — How Medical Content Reaches the AI</h3>
+        <p>The backendlerni pipeline stores knowledge as local JSON files — no external database needed</p>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <div class="alert alert-blue">
+        <div class="alert-icon">💡</div>
+        <div><strong>No Supabase needed for the core system.</strong> The RAG pipeline (the system that gives the AI medical knowledge) uses local JSON files stored in a <code>.backendlerni/</code> folder on the server. Only <code>OPENAI_API_KEY</code> is required. Supabase is a separate optional feature for PDF document uploads only.</div>
+      </div>
+
+      <h4 class="sub-heading">How to add medical content (the normal workflow)</h4>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Open the web platform dashboard</h4>
+            <p>Go to your deployed Vercel URL. You'll see a content management dashboard.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Add a medical case or document</h4>
+            <p>Use the dashboard form (or POST directly to <code>/api/backendlerni/sources/text</code>) with the case text, a title, and optional tags like <code>NSTEMI</code>, <code>cardiology</code>. These tags are matched against the <code>rag_tags</code> column in your Google Sheet.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Publish the RAG bundle</h4>
+            <p>Click <strong>Publish</strong> in the dashboard (or POST to <code>/api/backendlerni/publish</code>). This chunks the text, generates OpenAI embeddings, and writes a versioned JSON bundle file to <code>.backendlerni/bundles/</code>.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Unity fetches the bundle on next startup</h4>
+            <p>Unity calls <code>/api/backendlerni/rag/manifest</code> to check the current version, then downloads the bundle if it has changed. The relevant chunks are injected into AI prompts as context.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-amber" style="margin-top:4px;">
+        <div class="alert-icon">⚠️</div>
+        <div><strong>Vercel filesystem warning:</strong> Vercel's serverless filesystem is <strong>ephemeral</strong> — files in <code>.backendlerni/</code> are deleted on every redeploy or restart. To persist RAG data on Vercel, set the env var <code>BACKENDLERNI_DATA_DIR</code> to a path on an attached storage volume, or deploy on <strong>Render</strong> with a Persistent Disk instead. The README in <code>LerniPlatfrom/BACKENDLERNI_README.md</code> covers this migration path.</div>
+      </div>
+
+      <button class="dev-toggle" onclick="toggleDev(this)" style="margin-top:16px;">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Supabase setup — for the optional PDF upload feature
+      </button>
+      <div class="dev-panel">
+        <p style="margin-bottom:12px;font-size:13px;">Supabase is only needed if you want to use the PDF document upload feature (<code>/api/documents/</code> routes). The main RAG pipeline does not use it.</p>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Create a Supabase account</h4>
+              <p>Go to <strong>supabase.com → Start your project</strong>. Choose region <strong>eu-west-2</strong>.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Enable pgvector &amp; run schema</h4>
+              <p><strong>Database → Extensions → vector</strong>. Then run the SQL schema from <code>LerniPlatfrom/SUPABASE_SETUP.md</code> in the SQL Editor.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Copy credentials</h4>
+              <p><strong>Project Settings → API</strong>: copy Project URL → <code>SUPABASE_URL</code> and service_role key → <code>SUPABASE_SERVICE_ROLE_KEY</code>. Add both to Vercel env vars.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     ENV VARS
+════════════════════════════ -->
+<div class="section-wrap" id="env-vars">
+  <div class="card">
+    <div class="card-header">
+      <div class="ch-icon violet">⬢</div>
+      <div class="ch-text">
+        <h3>Environment Variables</h3>
+        <p>All web platform configuration — add these in Vercel → Project → Settings → Environment Variables</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Variable</th><th>Where to get it</th><th>Required?</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>OPENAI_API_KEY</code></td>
+              <td>OpenAI Platform → API Keys → Create new secret key</td>
+              <td><span class="badge badge-req">Required</span></td>
+            </tr>
+            <tr>
+              <td><code>SUPABASE_URL</code></td>
+              <td>Supabase → Project Settings → API → Project URL. Only needed for PDF upload feature.</td>
+              <td><span class="badge badge-opt">Optional</span></td>
+            </tr>
+            <tr>
+              <td><code>SUPABASE_SERVICE_ROLE_KEY</code></td>
+              <td>Supabase → Project Settings → API → service_role (secret key). Only needed for PDF upload feature.</td>
+              <td><span class="badge badge-opt">Optional</span></td>
+            </tr>
+            <tr>
+              <td><code>BACKENDLERNI_DATA_DIR</code></td>
+              <td>Path where RAG JSON files are stored. Default: <code>.backendlerni/</code> in app root. On Render, set to a persistent disk mount path (e.g. <code>/var/data/backendlerni</code>).</td>
+              <td><span class="badge badge-opt">Optional</span></td>
+            </tr>
+            <tr>
+              <td><code>CSV_PUBLIC_URL</code></td>
+              <td>The published Google Sheets CSV URL (Sheet Setup step 3)</td>
+              <td><span class="badge badge-req">Required</span></td>
+            </tr>
+            <tr>
+              <td><code>APPS_SCRIPT_URL</code></td>
+              <td>The deployed Google Apps Script web app URL (Sheet Setup step 4)</td>
+              <td><span class="badge badge-req">Required</span></td>
+            </tr>
+            <tr>
+              <td><code>GOOGLE_SPREADSHEET_ID</code></td>
+              <td>The ID in your Sheet URL: <code>spreadsheets/d/<strong>[THIS PART]</strong>/edit</code></td>
+              <td><span class="badge badge-req">Required</span></td>
+            </tr>
+            <tr>
+              <td><code>GOOGLE_SHEET_NAME</code></td>
+              <td>The tab name, typically <code>Sheet1</code></td>
+              <td><span class="badge badge-req">Required</span></td>
+            </tr>
+            <tr>
+              <td><code>GOOGLE_SERVICE_ACCOUNT_EMAIL</code></td>
+              <td>Google Cloud Console → Service Accounts → email</td>
+              <td><span class="badge badge-opt">Optional</span></td>
+            </tr>
+            <tr>
+              <td><code>GOOGLE_PRIVATE_KEY</code></td>
+              <td>Google Cloud Console → Service Accounts → Keys → JSON key file</td>
+              <td><span class="badge badge-opt">Optional</span></td>
+            </tr>
+            <tr>
+              <td><code>OPENAI_VECTOR_STORE_ID</code></td>
+              <td>OpenAI Platform → Storage → Vector Stores → create one, copy <code>vs_...</code> ID</td>
+              <td><span class="badge badge-opt">Optional</span></td>
+            </tr>
+            <tr>
+              <td><code>NEXT_PUBLIC_BACKEND_BASE_URL</code></td>
+              <td>Leave empty when web + backend are on the same Vercel project</td>
+              <td><span class="badge badge-auto">Auto</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="alert alert-blue" style="margin-top:14px;">
+        <div class="alert-icon">💡</div>
+        <div><strong>Local development:</strong> Create a file named <code>.env.local</code> inside the <code>LerniPlatfrom/</code> folder with the same key=value pairs. This file is git-ignored. A template called <code>.env.example</code> is already in the repository.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     ACCOUNTS
+════════════════════════════ -->
+<div class="section-wrap" id="accounts">
+  <p class="section-title">Accounts &amp; API Keys</p>
+  <div class="card">
+    <div class="card-header">
+      <div class="ch-icon violet">⊕</div>
+      <div class="ch-text">
+        <h3>Required Accounts</h3>
+        <p>Step-by-step: create each account and find the key to copy</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="account-grid">
+
+        <div class="acc-card">
+          <div class="acc-header" style="background:#EFF6FF;color:#1D4ED8;">🤖 OpenAI</div>
+          <div class="acc-body">
+            <ol>
+              <li>Go to <strong>platform.openai.com</strong></li>
+              <li>Sign up → add a payment method in <strong>Billing</strong></li>
+              <li>Go to <strong>API Keys → Create new secret key</strong></li>
+              <li>Copy the key immediately — only shown once, starts with <code>sk-proj-...</code></li>
+              <li>Paste into: Vercel <code>OPENAI_API_KEY</code> <em>and</em> Unity Inspector <strong>Api Key</strong></li>
+            </ol>
+            <div class="alert alert-amber" style="margin-top:10px;padding:10px 12px;">
+              <div class="alert-icon" style="font-size:13px;">⚠️</div>
+              <div style="font-size:12px;">The Realtime API requires a paid account. Budget ~€5–15 per 100 exam sessions depending on duration.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="acc-card">
+          <div class="acc-header" style="background:#ECFDF5;color:#065F46;">☁️ Vercel</div>
+          <div class="acc-body">
+            <ol>
+              <li>Go to <strong>vercel.com → Sign Up</strong></li>
+              <li>Choose <strong>Continue with GitHub</strong></li>
+              <li>Select the free <strong>Hobby</strong> plan</li>
+              <li>From the dashboard: <strong>Add New → Project</strong></li>
+              <li>Import the LerniPlatform GitHub repository</li>
+              <li>Add all environment variables, then click Deploy</li>
+            </ol>
+            <p style="font-size:12px;color:var(--muted);margin-top:10px;">No API key needed — configured entirely through the web dashboard.</p>
+          </div>
+        </div>
+
+        <div class="acc-card">
+          <div class="acc-header" style="background:#F8FAFC;color:#334155;">💾 Persistent Storage (Render)</div>
+          <div class="acc-body">
+            <ol>
+              <li>Go to <strong>render.com → New → Web Service</strong></li>
+              <li>Connect your LerniPlatform GitHub repo</li>
+              <li>Under <strong>Disks</strong>, add a Persistent Disk mounted at <code>/var/data/backendlerni</code></li>
+              <li>Set env var <code>BACKENDLERNI_DATA_DIR=/var/data/backendlerni</code></li>
+            </ol>
+            <p style="font-size:12px;color:var(--muted);margin-top:10px;">Only needed if deploying on Render instead of Vercel — ensures RAG data survives redeploys.</p>
+          </div>
+        </div>
+
+        <div class="acc-card">
+          <div class="acc-header" style="background:#FFFBEB;color:#92400E;">📊 Google Sheets</div>
+          <div class="acc-body">
+            <ol>
+              <li>Sign in to <strong>sheets.google.com</strong> with any Google account</li>
+              <li>Open the provided spreadsheet (link in handover package)</li>
+              <li>Make a copy: <strong>File → Make a copy</strong></li>
+              <li>Publish: <strong>File → Share → Publish to web → CSV</strong></li>
+              <li>Copy the published URL → <code>CSV_PUBLIC_URL</code></li>
+            </ol>
+            <p style="font-size:12px;color:var(--muted);margin-top:10px;">No paid account needed. Standard free Google account is sufficient.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Optional accounts — collapsed -->
+      <button class="dev-toggle" onclick="toggleDev(this)" style="margin-top:16px;">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Optional accounts — Azure Cognitive Services &amp; ElevenLabs
+      </button>
+      <div class="dev-panel">
+        <div class="account-grid">
+          <div class="acc-card">
+            <div class="acc-header" style="background:#F1F5F9;color:#1E293B;">🎙️ Azure Speech</div>
+            <div class="acc-body">
+              <ol>
+                <li>Go to <strong>portal.azure.com</strong></li>
+                <li>Create a free account (200 USD credit for 12 months)</li>
+                <li>Search for <strong>Speech service</strong> → Create resource</li>
+                <li>Region: <code>West Europe</code></li>
+                <li><strong>Keys and Endpoint → Key 1</strong> → Unity Inspector <strong>Subscription Key</strong></li>
+              </ol>
+            </div>
+          </div>
+          <div class="acc-card">
+            <div class="acc-header" style="background:#FEF3C7;color:#92400E;">🎵 ElevenLabs</div>
+            <div class="acc-body">
+              <ol>
+                <li>Go to <strong>elevenlabs.io → Sign up</strong></li>
+                <li><strong>Profile Settings → API Key</strong> → copy it</li>
+                <li>Paste into Unity Inspector <strong>Api Key</strong> in the ElevenLabsTTS component</li>
+                <li>Browse the Voice Library for a German doctor/patient voice</li>
+                <li>Copy the voice ID into the corresponding Inspector field</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     SOURCE CODE
+════════════════════════════ -->
+<div class="section-wrap" id="source-code">
+  <div class="card">
+    <div class="card-header">
+      <div class="ch-icon navy">◻</div>
+      <div class="ch-text">
+        <h3>Source Code &amp; Downloads</h3>
+        <p>All repositories and files handed over as part of this project delivery</p>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <!-- Key files — collapsed -->
+      <button class="dev-toggle" onclick="toggleDev(this)" style="margin-top:14px;">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Key files in the Unity project
+      </button>
+      <div class="dev-panel">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td><code>Assets/Scripts/OpenAIRealtimeClient.cs</code></td><td>WebSocket connection to OpenAI Realtime API — manages the live voice session</td></tr>
+              <tr><td><code>Assets/Scripts/Prompts/RemotePromptManager.cs</code></td><td>Fetches and caches prompts from Google Sheets at startup</td></tr>
+              <tr><td><code>Assets/Scripts/AzurePronunciationService.cs</code></td><td>Sends audio to Azure for detailed German pronunciation scoring</td></tr>
+              <tr><td><code>Assets/Scripts/ElevenLabsTTS.cs</code></td><td>Text-to-speech using ElevenLabs German voices</td></tr>
+              <tr><td><code>Assets/Scripts/ClaudeEvaluationService.cs</code></td><td>Sends transcript to GPT-4o for structured 5-dimension evaluation</td></tr>
+              <tr><td><code>Assets/Scripts/MedicalExamManager.cs</code></td><td>Main coordinator — starts exam, tracks timer, triggers evaluation</td></tr>
+              <tr><td><code>Assets/Prompts/prompt_keys_runtime_only.csv</code></td><td>Local fallback CSV — used when Google Sheets is unreachable</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <button class="dev-toggle" onclick="toggleDev(this)" style="margin-top:10px;">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Key files in the web platform
+      </button>
+      <div class="dev-panel">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td><code>LerniPlatfrom/src/lib/supabase.ts</code></td><td>Supabase client — connects to the vector database</td></tr>
+              <tr><td><code>LerniPlatfrom/src/lib/embeddings.ts</code></td><td>Calls OpenAI to generate vector embeddings for uploaded documents</td></tr>
+              <tr><td><code>LerniPlatfrom/src/lib/rag.ts</code></td><td>Similarity search — retrieves relevant medical context for a query</td></tr>
+              <tr><td><code>LerniPlatfrom/BACKENDLERNI_README.md</code></td><td>Full API documentation for the RAG ingestion endpoints</td></tr>
+              <tr><td><code>LerniPlatfrom/.env.example</code></td><td>Template for all required environment variables</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Checklist -->
+      <div class="alert alert-green" style="margin-top:20px;">
+        <div class="alert-icon">✅</div>
+        <div>
+          <strong>Handover checklist</strong>
+          <ul style="margin-top:8px;padding-left:18px;line-height:2.1;font-size:13.5px;">
+            <li>Unity repo cloned — <code>github.com/Maher-Guerfali/lernime</code></li>
+            <li>Web platform repo cloned — <code>github.com/Maher-Guerfali/LerniWebsite</code></li>
+            <li>CSV file downloaded from <code>files.fm/u/7dst3vaxqu</code> and imported into Google Sheets</li>
+            <li>OpenAI API key created and saved securely</li>
+            <li>Vercel project deployed with all environment variables</li>
+            <li>Medical content added via web dashboard and bundle published</li>
+            <li>RAG storage path confirmed (persistent disk if on Render, or accepted Vercel limitation)</li>
+            <li>Unity scene opened, all API keys entered in Inspector</li>
+            <li>Test run completed — AI responds and evaluation appears</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="margin-top:28px;padding:20px 24px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--line);text-align:center;">
+        <div style="font-size:13px;color:var(--muted);">Questions during onboarding? Contact the developer:</div>
+        <div style="font-size:15px;font-weight:700;color:var(--ink);margin-top:4px;">boudmaker@gmail.com</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- bottom spacer -->
+<div style="height:60px;"></div>
+
+</main>
+
+<!-- ════════════════════════════
+     SCRIPTS
+════════════════════════════ -->
+<script>
+/* Language switcher */
+function setLang(lang) {
+  document.body.classList.toggle('lang-de', lang === 'de');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-de').classList.toggle('active', lang === 'de');
+  localStorage.setItem('lerni-lang', lang);
+}
+// Restore saved preference
+(function() {
+  const saved = localStorage.getItem('lerni-lang');
+  if (saved === 'de') setLang('de');
+})();
+
+/* Toggle dev panels */
+function toggleDev(btn) {
+  btn.classList.toggle('open');
+  const panel = btn.nextElementSibling;
+  panel.classList.toggle('open');
+  const isOpen = panel.classList.contains('open');
+  btn.childNodes[btn.childNodes.length - 1].textContent =
+    btn.childNodes[btn.childNodes.length - 1].textContent
+      .replace(isOpen ? '' : ' ▴', isOpen ? ' ▴' : '');
+}
+
+/* Active nav highlight on scroll */
+const allSections = document.querySelectorAll('[id]');
+const navLinks = document.querySelectorAll('nav ul li a');
+
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const match = document.querySelector(`nav a[href="#${e.target.id}"]`);
+      if (match) match.classList.add('active');
+    }
+  });
+}, { rootMargin: '0px 0px -60% 0px', threshold: 0 });
+
+allSections.forEach(s => io.observe(s));
+</script>
+
+</body>
+</html>

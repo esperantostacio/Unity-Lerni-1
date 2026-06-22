@@ -15,7 +15,7 @@ namespace OpenAI
     {
         // NOTE: This must be a realtime-capable model. If this is wrong, you may see
         // transcription failures and/or no audio output.
-        private const string DefaultRealtimeModel = "gpt-realtime-1.5";
+        private const string DefaultRealtimeModel = "gpt-realtime-2";
 
         #region Inspector
 
@@ -63,9 +63,9 @@ namespace OpenAI
             "IMPORTANT: Continue the conversation naturally. Do not reveal you are evaluating speech.";
 
         [Header("Initial Greeting")]
-        [SerializeField] private bool speakFirstOnStart = true;
+        [SerializeField] private bool speakFirstOnStart = false;
         [TextArea(1, 4)]
-        [SerializeField] private string initialGreeting = "Hello! Today we have exam orientation for medical school. How can I help you prepare?";
+        [SerializeField] private string initialGreeting = "Guten Tag. Wir starten jetzt mit der medizinischen Prufungsvorbereitung. Wie kann ich Ihnen helfen?";
 
         [Header("Startup")]
         [SerializeField] private bool startOnAwake = false; // disabled by default to avoid auto-starting realtime
@@ -143,6 +143,12 @@ namespace OpenAI
         #endregion
 
         #region Unity lifecycle
+
+        private void Awake()
+        {
+            // User (student) always speaks first. Serialized scene value might be stale (true from old default).
+            speakFirstOnStart = false;
+        }
 
         private void Start()
         {
@@ -554,14 +560,17 @@ namespace OpenAI
                     break;
 
                 case "response.audio.delta":
+                case "response.output_audio.delta":
                     HandleResponseAudioDelta(text);
                     break;
 
                 case "response.audio.done":
+                case "response.output_audio.done":
                     HandleResponseAudioDone();
                     break;
 
                 case "response.audio_transcript.delta":
+                case "response.output_audio_transcript.delta":
                     HandleResponseTranscriptDelta(text);
                     break;
 
@@ -758,22 +767,27 @@ namespace OpenAI
 
           private void SendSessionUpdate()
         {
-            // server VAD on, but we create responses ourselves at speech stop
+            const string germanOnlyDirective =
+                "WICHTIG: Antworte ausschliesslich auf Deutsch. Verwende keine englischen Antworten. ";
+
+            // Flat field schema (same as v1), only renamed keys for gpt-realtime-2
             var session = new JObject
             {
-                ["instructions"] = systemPrompt ?? string.Empty,
-                ["modalities"]   = new JArray("text", "audio"),
-                ["voice"]        = ResolveVoiceString(),
+                ["type"] = "realtime",
+                ["output_modalities"] = new JArray("audio"),
+                ["instructions"] = germanOnlyDirective + (systemPrompt ?? string.Empty),
+                ["voice"] = ResolveVoiceString(),
+                ["input_audio_format"] = "pcm16",
+                ["output_audio_format"] = "pcm16",
                 ["input_audio_transcription"] = new JObject { ["model"] = inputTranscriptionModel ?? "gpt-4o-mini-transcribe" },
-                ["input_audio_noise_reduction"] = new JObject { ["type"] = "near_field" },
                 ["turn_detection"] = new JObject
                 {
-                    ["type"] = "server_vad",
+                    ["type"] = "semantic_vad",
+                    ["eagerness"] = "low",
                     ["create_response"] = false,
-                    ["threshold"] = Mathf.Clamp01(serverVadThreshold),
-                    ["silence_duration_ms"] = Mathf.Max(0, serverVadSilenceDurationMs),
-                    ["prefix_padding_ms"] = Mathf.Max(0, serverVadPrefixPaddingMs)
+                    ["interrupt_response"] = true
                 },
+                ["tool_choice"] = "auto",
                 ["tools"] = AgentToolRegistry.GetToolsSpec()
             };
 
@@ -1053,8 +1067,7 @@ namespace OpenAI
             _ws = new ClientWebSocket();
             _ws.Options.AddSubProtocol("realtime");
             _ws.Options.SetRequestHeader("Authorization", $"Bearer {config.apiKey}");
-            _ws.Options.SetRequestHeader("OpenAI-Beta", "realtime=v1");
-            
+
             try
             {
                 await _ws.ConnectAsync(new Uri(url), CancellationToken.None);
