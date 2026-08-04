@@ -159,5 +159,19 @@ Packages/packages-lock.json linguist-generated
 # Spine export file for Unity
 *.skel.bytes            lfs
 
+# glTF models
+*.glb                   lfs
+*.gltf                  lfs
+
+# Additional binary asset types used in this project
+*.mesh                  lfs
+*.texture2D             lfs
+*.pb                    lfs
+*.bundle                lfs
+*.dylib                 lfs
+
+# Large generated RAG data file
+Assets/StreamingAssets/PrebuiltRAG/*.json lfs
+
 # Exceptions for .asset files such as lightning pre-baking
 LightingData.asset     binary

@@ -7,10 +7,11 @@ using UnityEngine;
 using NativeWebSocket;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using MedicalExam;
 
 public class OpenAIRealtimeClient : MonoBehaviour
 {
-    private const string DefaultRealtimeModel = "gpt-realtime-2";
+    private const string DefaultRealtimeModel = "gpt-realtime-2.1";
 
     private static readonly HashSet<string> SupportedRealtimeVoices = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
@@ -167,7 +168,9 @@ public class OpenAIRealtimeClient : MonoBehaviour
 
         // Exposes the API key so MedicalExamManager can reuse it for the lightweight
         // per-turn pronunciation tracking coroutine in Realtime mode.
-        public string ApiKey => apiKey;
+        // The shared APIKeyConfig asset wins when set, so rotating one key there fixes every
+        // component even if a stale key is still serialized on this one.
+        public string ApiKey => !string.IsNullOrWhiteSpace(APIKeyConfig.Instance?.OpenAIApiKey) ? APIKeyConfig.Instance.OpenAIApiKey : apiKey;
 
         private void OnDestroy()
         {
@@ -194,7 +197,7 @@ public class OpenAIRealtimeClient : MonoBehaviour
             // GA Realtime API: do not send the deprecated OpenAI-Beta realtime header.
             var headers = new Dictionary<string, string>
             {
-                { "Authorization", "Bearer " + apiKey }
+                { "Authorization", "Bearer " + ApiKey }
             };
 
             string url = $"wss://api.openai.com/v1/realtime?model={Uri.EscapeDataString(model)}";
@@ -701,7 +704,7 @@ public class OpenAIRealtimeClient : MonoBehaviour
                         ["turn_detection"] = new JObject
                         {
                             ["type"] = "semantic_vad",
-                            ["eagerness"] = "low",
+                            ["eagerness"] = "medium",
                             ["create_response"] = false,
                             ["interrupt_response"] = true
                         }
@@ -870,6 +873,14 @@ public class OpenAIRealtimeClient : MonoBehaviour
                 || requested.Equals("gpt-4o-realtime", StringComparison.OrdinalIgnoreCase))
             {
                 Debug.LogWarning($"[OpenAIRealtimeClient] Legacy realtime model '{requested}' detected. Using '{DefaultRealtimeModel}' instead.");
+                return DefaultRealtimeModel;
+            }
+
+            // gpt-realtime-2 still works but has been superseded by gpt-realtime-2.1 (better
+            // alphanumeric recognition, noise handling, and interruption behavior).
+            if (requested.Equals("gpt-realtime-2", StringComparison.OrdinalIgnoreCase))
+            {
+                Debug.LogWarning($"[OpenAIRealtimeClient] Realtime model '{requested}' detected. Using '{DefaultRealtimeModel}' instead.");
                 return DefaultRealtimeModel;
             }
 

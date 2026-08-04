@@ -91,6 +91,14 @@ Assets/Resources/ElevenLabsConfig.asset
 Assets/Resources/ElevenLabsConfig.asset.meta
 Assets/Resources/OpenAIConfig.asset
 Assets/Resources/OpenAIConfig.asset.meta
+Assets/OpenAIConfig.asset
+Assets/OpenAIConfig.asset.meta
+Assets/ElevenLabsConfig.asset
+Assets/ElevenLabsConfig.asset.meta
+Assets/ElevenLabsConfig 1.asset
+Assets/ElevenLabsConfig 1.asset.meta
+Assets/Resources/APIKeys.asset
+Assets/Resources/APIKeys.asset.meta
 .DS_Store
 
 # AutoLOD Generated files (can be very large)
@@ -99,12 +107,10 @@ Assets/AutoLOD/Generated/
 # Next.js build cache
 LerniPlatfrom/.next/
 
-# Large binary/document assets excluded from git push
-Assets/Resources/MedicalKnowledge/Buch_Fachsprachprüfung_Erfolgreich_Bestehen.pdf
-Assets/Resources/MedicalKnowledge/Buch_Fachsprachpr*Bestehen.pdf
-Assets/Resources/MedicalKnowledge/Buch_Deutsch_fuer_Aerztinnen_und_Aerzte.pdf
-Assets/AllSkyFree/Cold Sunset/Cold Sunset Equirect.png
-Assets/Oculus/LipSync/Plugins/iOS/libOVRLipSync.dylib
-Assets/Oculus/LipSync/Plugins/MacOSX/OVRLipSync.bundle
-Assets/office_chair.glb
-Assets/StreamingAssets/PrebuiltRAG/medical_knowledge_db.json
+# Unity Editor crash-recovery scene backups -- never version-controlled,
+# and older copies here have carried leaked API keys.
+Assets/_Recovery/
+
+# Standalone build output folders
+apk builds/
+mono_crash.*.blob

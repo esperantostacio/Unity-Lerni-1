@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
+using MedicalExam;
 
 namespace MedicalExam.RAG
 {
@@ -16,6 +17,11 @@ namespace MedicalExam.RAG
         [SerializeField] private string apiKey;
         [SerializeField] private string embeddingModel = "text-embedding-3-small";
         [SerializeField] private bool useLocalMockEmbeddings = true; // For testing without API calls
+
+        /// <summary>Resolved OpenAI key: the shared APIKeyConfig asset wins when set, so rotating one
+        /// key there fixes every component even if a stale key is still serialized on this one.</summary>
+        private string ResolvedApiKey =>
+            !string.IsNullOrWhiteSpace(APIKeyConfig.Instance?.OpenAIApiKey) ? APIKeyConfig.Instance.OpenAIApiKey : apiKey;
 
         private const string OPENAI_EMBEDDING_URL = "https://api.openai.com/v1/embeddings";
 
@@ -40,7 +46,7 @@ namespace MedicalExam.RAG
                 yield break;
             }
 
-            if (string.IsNullOrWhiteSpace(apiKey))
+            if (string.IsNullOrWhiteSpace(ResolvedApiKey))
             {
                 var errorMsg = "OpenAI API key not configured";
                 onError?.Invoke(errorMsg);
@@ -62,7 +68,7 @@ namespace MedicalExam.RAG
                 request.uploadHandler = new UploadHandlerRaw(bodyBytes);
                 request.downloadHandler = new DownloadHandlerBuffer();
                 request.SetRequestHeader("Content-Type", "application/json");
-                request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                request.SetRequestHeader("Authorization", $"Bearer {ResolvedApiKey}");
 
                 yield return request.SendWebRequest();
 
@@ -118,7 +124,7 @@ namespace MedicalExam.RAG
                 yield break;
             }
 
-            if (string.IsNullOrWhiteSpace(apiKey))
+            if (string.IsNullOrWhiteSpace(ResolvedApiKey))
             {
                 var errorMsg = "OpenAI API key not configured";
                 onError?.Invoke(errorMsg);
@@ -140,7 +146,7 @@ namespace MedicalExam.RAG
                 request.uploadHandler = new UploadHandlerRaw(bodyBytes);
                 request.downloadHandler = new DownloadHandlerBuffer();
                 request.SetRequestHeader("Content-Type", "application/json");
-                request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                request.SetRequestHeader("Authorization", $"Bearer {ResolvedApiKey}");
 
                 yield return request.SendWebRequest();
 

@@ -323,9 +323,11 @@ Remember: return ONLY plain text in the requested structure.";
             System.Action<EvaluationResponse> onSuccess,
             System.Action<string> onError)
         {
+            // Falls back to OpenAI's flagship reasoning model when no fine-tuned/config model
+            // is set — evaluation quality matters more here than cost or latency.
             string baseModel = !string.IsNullOrWhiteSpace(openAIConfig.chatModelId)
                 ? openAIConfig.chatModelId
-                : "gpt-4o-mini";
+                : "gpt-5.6-sol";
 
             string modelToUse = ResolveEvaluatorModel(baseModel, roleType);
 

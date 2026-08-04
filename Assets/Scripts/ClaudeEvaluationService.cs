@@ -18,7 +18,7 @@ namespace MedicalExam
         private const string ANTHROPIC_VERSION = "2023-06-01";
 
         [Header("Claude API")]
-        [Tooltip("Your Anthropic API key (sk-ant-...).")]
+        [Tooltip("Your Anthropic API key (sk-ant-...). Leave blank to use APIKeyConfig.")]
         [SerializeField] private string apiKey = "";
 
         [Tooltip("Model ID. Default: claude-sonnet-4-6 (best rubric adherence + JSON reliability).")]
@@ -30,7 +30,12 @@ namespace MedicalExam
         [Tooltip("HTTP timeout seconds.")]
         [SerializeField] private int timeoutSeconds = 60;
 
-        public bool IsConfigured => !string.IsNullOrWhiteSpace(apiKey);
+        /// <summary>Resolved Anthropic key: the shared APIKeyConfig asset wins when set, so rotating one
+        /// key there fixes every component even if a stale key is still serialized on this one.</summary>
+        private string ResolvedApiKey =>
+            !string.IsNullOrWhiteSpace(APIKeyConfig.Instance?.AnthropicApiKey) ? APIKeyConfig.Instance.AnthropicApiKey : apiKey;
+
+        public bool IsConfigured => !string.IsNullOrWhiteSpace(ResolvedApiKey);
 
         /// <summary>
         /// Sends a system + user prompt to Claude and returns the raw text response.
@@ -74,7 +79,7 @@ namespace MedicalExam
             req.uploadHandler   = new UploadHandlerRaw(raw);
             req.downloadHandler = new DownloadHandlerBuffer();
             req.SetRequestHeader("Content-Type",      "application/json");
-            req.SetRequestHeader("x-api-key",         apiKey);
+            req.SetRequestHeader("x-api-key",         ResolvedApiKey);
             req.SetRequestHeader("anthropic-version", ANTHROPIC_VERSION);
             req.timeout = Mathf.Clamp(timeoutSeconds, 10, 120);
 

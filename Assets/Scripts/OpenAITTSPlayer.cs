@@ -203,20 +203,25 @@ namespace MedicalExam
 
         private string GetAPIKey()
         {
-            // 1. OpenAIConfig ScriptableObject
+            // 1. Shared APIKeyConfig asset — wins when set, so rotating one key there fixes
+            //    every component even if a stale key is still serialized on this one.
+            if (APIKeyConfig.Instance != null && !string.IsNullOrWhiteSpace(APIKeyConfig.Instance.OpenAIApiKey))
+                return APIKeyConfig.Instance.OpenAIApiKey;
+
+            // 2. OpenAIConfig ScriptableObject
             if (openAIConfig != null && !string.IsNullOrWhiteSpace(openAIConfig.apiKey))
                 return openAIConfig.apiKey;
 
-            // 2. Inspector field
+            // 3. Inspector field
             if (!string.IsNullOrWhiteSpace(apiKey))
                 return apiKey;
 
-            // 3. Environment variable
+            // 4. Environment variable
             string envKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
             if (!string.IsNullOrWhiteSpace(envKey))
                 return envKey;
 
-            // 4. Find OpenAIConfig in scene
+            // 5. Find OpenAIConfig in scene
             var config = FindFirstObjectByType<OpenAI.OpenAIConfig>();
             if (config != null && !string.IsNullOrWhiteSpace(config.apiKey))
                 return config.apiKey;

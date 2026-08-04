@@ -378,6 +378,12 @@ namespace MedicalExam.RAG
 
             string srcPath = System.IO.Path.Combine(Application.streamingAssetsPath, prebuiltDbPath);
 
+            // On desktop/iOS, streamingAssetsPath is a bare filesystem path with no URI scheme.
+            // UnityWebRequest needs "file://" or it tries (and fails) to resolve it as a host.
+            // Android/WebGL/editor-jar paths already come back with a scheme, so leave those alone.
+            if (!srcPath.Contains("://"))
+                srcPath = "file://" + srcPath;
+
             // On Android/Quest, StreamingAssets are inside the APK — must use UnityWebRequest
             using (var request = UnityWebRequest.Get(srcPath))
             {

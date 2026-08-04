@@ -57,8 +57,8 @@ namespace MedicalExam
         [SerializeField] private string nativeLocale = "de-DE";
 
         [Header("Wit.ai TTS Settings (Meta Cloud — Fallback)")]
-        [Tooltip("Your Wit.ai Server Access Token (only needed if using WitAI cloud provider)")]
-        [SerializeField] private string witAiToken = "TM653MHZYI6IRBJLX5TQGIBD2DHO2BJQ";
+        [Tooltip("Your Wit.ai Server Access Token (only needed if using WitAI cloud provider). Leave blank to use APIKeyConfig.")]
+        [SerializeField] private string witAiToken = "";
 
         [Tooltip("Wit.ai voice name. Examples: wit$Rebecca, wit$Charlie, wit$Ana, wit$Kenji")]
         [SerializeField] private string witAiVoice = "wit$Rebecca";
@@ -75,8 +75,8 @@ namespace MedicalExam
         [SerializeField] private int witAiSampleRateHz = 24000;
 
         [Header("Murf.ai TTS Settings (Premium Quality Cloud)")]
-        [Tooltip("Your Murf.ai API Key")]
-        [SerializeField] private string murfAiApiKey = "ap2_cab34214-db64-4c45-a688-dd5917561442";
+        [Tooltip("Your Murf.ai API Key. Leave blank to use APIKeyConfig.")]
+        [SerializeField] private string murfAiApiKey = "";
 
         [Tooltip("Murf.ai voice ID for German. Default is female: Erna")]
         [SerializeField] private string murfAiVoiceId = "Erna";
@@ -91,8 +91,8 @@ namespace MedicalExam
         [SerializeField] private int murfAiSampleRateHz = 24000;
 
         [Header("ElevenLabs TTS Settings (Fastest Streaming)")]
-        [Tooltip("Your ElevenLabs API Key")]
-        [SerializeField] private string elevenLabsApiKey = "sk_f44e30884ae5af21c65d217d5249afbed6c11c4bd6c6ea68";
+        [Tooltip("Your ElevenLabs API Key. Leave blank to use APIKeyConfig.")]
+        [SerializeField] private string elevenLabsApiKey = "";
 
         [Tooltip("Female Voice ID for Doctor-to-Patient. Default: Bella")]
         [SerializeField] private string elevenLabsVoiceMale = "EXAVITQu4vr4xnSDxMaL";
@@ -123,6 +123,19 @@ namespace MedicalExam
         private List<byte> murfAudioBuffer;
         private MethodInfo pcmEnqueueMethod;
 
+        /// <summary>Resolved Murf.ai key: the shared APIKeyConfig asset wins when set, so rotating one
+        /// key there fixes every component even if a stale key is still serialized on this one.</summary>
+        private string ResolvedMurfAiApiKey =>
+            !string.IsNullOrEmpty(APIKeyConfig.Instance?.MurfAiApiKey) ? APIKeyConfig.Instance.MurfAiApiKey : murfAiApiKey;
+
+        /// <summary>Resolved ElevenLabs key: the shared APIKeyConfig asset wins when set.</summary>
+        private string ResolvedElevenLabsApiKey =>
+            !string.IsNullOrEmpty(APIKeyConfig.Instance?.ElevenLabsApiKey) ? APIKeyConfig.Instance.ElevenLabsApiKey : elevenLabsApiKey;
+
+        /// <summary>Resolved Wit.ai token: the shared APIKeyConfig asset wins when set.</summary>
+        private string ResolvedWitAiToken =>
+            !string.IsNullOrEmpty(APIKeyConfig.Instance?.WitAiToken) ? APIKeyConfig.Instance.WitAiToken : witAiToken;
+
         private void Start()
         {
             if (string.IsNullOrEmpty(apiKey))
@@ -137,13 +150,13 @@ namespace MedicalExam
 
             Debug.Log("[OpenAI-TTS] OpenAI TTS initialized (model: " + model + ")");
 
-            if (!string.IsNullOrEmpty(witAiToken))
+            if (!string.IsNullOrEmpty(ResolvedWitAiToken))
                 Debug.Log($"[Wit.ai-TTS] Wit.ai TTS ready (voice: {witAiVoice})");
 
-            if (!string.IsNullOrEmpty(murfAiApiKey))
+            if (!string.IsNullOrEmpty(ResolvedMurfAiApiKey))
                 Debug.Log($"[Murf.ai-TTS] Murf.ai TTS ready (voice: {murfAiVoiceId}, locale: {murfAiLocale})");
 
-            if (!string.IsNullOrEmpty(elevenLabsApiKey) && elevenLabsApiKey != "sk_...")
+            if (!string.IsNullOrEmpty(ResolvedElevenLabsApiKey))
                 Debug.Log($"[ElevenLabs-TTS] ElevenLabs TTS ready (Voices: {elevenLabsVoiceMale} / {elevenLabsVoiceFemale})");
 
             InitNativeTTS();
@@ -414,7 +427,7 @@ namespace MedicalExam
         /// </summary>
         public void SpeakWithMurfAI(string text)
         {
-            if (string.IsNullOrEmpty(murfAiApiKey))
+            if (string.IsNullOrEmpty(ResolvedMurfAiApiKey))
             {
                 Debug.LogError("[Murf.ai-TTS] Murf.ai API key is not set!");
                 return;
@@ -439,7 +452,7 @@ namespace MedicalExam
             bool firstChunk = true;
             int totalReceived = 0;
 
-            string wsUrl = $"wss://global.api.murf.ai/v1/speech/stream-input?api-key={murfAiApiKey}&model={murfAiModel}&sample_rate={murfAiSampleRateHz}&channel_type=MONO&format=WAV";
+            string wsUrl = $"wss://global.api.murf.ai/v1/speech/stream-input?api-key={ResolvedMurfAiApiKey}&model={murfAiModel}&sample_rate={murfAiSampleRateHz}&channel_type=MONO&format=WAV";
             var ws = new WebSocket(wsUrl);
             activeWebSockets.Add(ws);
 
@@ -697,7 +710,7 @@ namespace MedicalExam
 
         public void SpeakWithElevenLabs(string text, string voiceId = null)
         {
-            if (string.IsNullOrEmpty(elevenLabsApiKey) || elevenLabsApiKey == "sk_...")
+            if (string.IsNullOrEmpty(ResolvedElevenLabsApiKey))
             {
                 Debug.LogError("[ElevenLabs-TTS] API Key is missing or default.");
                 return;
@@ -804,7 +817,7 @@ namespace MedicalExam
             var payload = new ElevenLabsPayload
             {
                 text = text + " ", // Append space to ensure token closure
-                xi_api_key = elevenLabsApiKey,
+                xi_api_key = ResolvedElevenLabsApiKey,
                 voice_settings = new ElevenLabsVoiceSettings { stability = 0.5f, similarity_boost = 0.75f },
                 try_trigger_generation = true
             };
@@ -842,7 +855,7 @@ namespace MedicalExam
         /// </summary>
         public void SpeakWithWitAI(string text)
         {
-            if (string.IsNullOrEmpty(witAiToken))
+            if (string.IsNullOrEmpty(ResolvedWitAiToken))
             {
                 Debug.LogError("[Wit.ai-TTS] Wit.ai token is not set!");
                 return;
@@ -878,7 +891,7 @@ namespace MedicalExam
                 request.uploadHandler = new UploadHandlerRaw(bodyRaw);
                 request.downloadHandler = new DownloadHandlerBuffer();
                 request.SetRequestHeader("Content-Type", "application/json");
-                request.SetRequestHeader("Authorization", $"Bearer {witAiToken}");
+                request.SetRequestHeader("Authorization", $"Bearer {ResolvedWitAiToken}");
                 // Request raw PCM for fastest playback (no decode step)
                 request.SetRequestHeader("Accept", "audio/raw");
 
@@ -925,7 +938,7 @@ namespace MedicalExam
                 request.uploadHandler = new UploadHandlerRaw(bodyRaw);
                 request.downloadHandler = new DownloadHandlerBuffer();
                 request.SetRequestHeader("Content-Type", "application/json");
-                request.SetRequestHeader("Authorization", $"Bearer {witAiToken}");
+                request.SetRequestHeader("Authorization", $"Bearer {ResolvedWitAiToken}");
                 request.SetRequestHeader("Accept", "audio/wav");
 
                 float startTime = Time.realtimeSinceStartup;
@@ -1033,7 +1046,12 @@ namespace MedicalExam
 
         private string GetAPIKey()
         {
-            // Try Inspector field first
+            // The shared APIKeyConfig asset wins when set, so rotating one key there fixes
+            // every component even if a stale key is still serialized on this one.
+            if (APIKeyConfig.Instance != null && !string.IsNullOrEmpty(APIKeyConfig.Instance.OpenAIApiKey))
+                return APIKeyConfig.Instance.OpenAIApiKey;
+
+            // Try Inspector field
             if (!string.IsNullOrEmpty(apiKey))
                 return apiKey;
 

@@ -12,14 +12,19 @@ namespace MedicalExam
     /// </summary>
     public class GptAndWhisper : MonoBehaviour
     {
-        [Tooltip("API key for GPT-4 or OpenAI service.")]
+        [Tooltip("API key for GPT-4 or OpenAI service. Leave blank to use APIKeyConfig.")]
         [SerializeField] private string apiKey;
+
+        /// <summary>Resolved OpenAI key: the shared APIKeyConfig asset wins when set, so rotating one
+        /// key there fixes every component even if a stale key is still serialized on this one.</summary>
+        private string ResolvedApiKey =>
+            !string.IsNullOrWhiteSpace(APIKeyConfig.Instance?.OpenAIApiKey) ? APIKeyConfig.Instance.OpenAIApiKey : apiKey;
 
         [Tooltip("Model to use for the conversation loop (e.g. gpt-4o, gpt-4o-mini).")]
         [SerializeField] private string chatModel = "gpt-4o";
 
-        [Tooltip("Model to use for the final evaluation (e.g. gpt-4, gpt-4o).")]
-        [SerializeField] private string evaluationModel = "gpt-4o";
+        [Tooltip("Model to use for the final evaluation. Defaults to OpenAI's flagship reasoning model since evaluation quality matters most here.")]
+        [SerializeField] private string evaluationModel = "gpt-5.6-sol";
 
         [Tooltip("Prompt to prepend to the transcript for evaluation.")]
         [TextArea(3, 12)]
@@ -108,7 +113,7 @@ namespace MedicalExam
 
         public IEnumerator EvaluateTranscript(string transcript, Action<string> onResult, Action<string> onError)
         {
-            if (string.IsNullOrWhiteSpace(apiKey))
+            if (string.IsNullOrWhiteSpace(ResolvedApiKey))
             {
                 onError?.Invoke("API key is missing.");
                 yield break;
@@ -127,8 +132,8 @@ namespace MedicalExam
 
             var chatRequest = new ChatRequest
             {
-                // Default to gpt-4o if not set, for speed.
-                model = !string.IsNullOrWhiteSpace(evaluationModel) ? evaluationModel : "gpt-4o",
+                // Default to OpenAI's flagship reasoning model if not set — evaluation quality over speed.
+                model = !string.IsNullOrWhiteSpace(evaluationModel) ? evaluationModel : "gpt-5.6-sol",
                 messages = new ChatMessage[]
                 {
                     new ChatMessage { role = "system", content = "You are a medical exam evaluator. Provide honest, strict evaluation scores in JSON format." },
@@ -147,7 +152,7 @@ namespace MedicalExam
                 request.uploadHandler = new UnityEngine.Networking.UploadHandlerRaw(bodyRaw);
                 request.downloadHandler = new UnityEngine.Networking.DownloadHandlerBuffer();
                 request.SetRequestHeader("Content-Type", "application/json");
-                request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                request.SetRequestHeader("Authorization", $"Bearer {ResolvedApiKey}");
 
                 yield return request.SendWebRequest();
 
@@ -226,7 +231,7 @@ namespace MedicalExam
         /// </summary>
         public IEnumerator SendPromptToGpt(string prompt, Action<string> onResult, Action<string> onError, string systemMessage = null, bool usePromptAsSystemOnly = false)
         {
-            if (string.IsNullOrWhiteSpace(apiKey))
+            if (string.IsNullOrWhiteSpace(ResolvedApiKey))
             {
                 onError?.Invoke("API key is missing.");
                 yield break;
@@ -258,7 +263,7 @@ namespace MedicalExam
         /// </summary>
         public IEnumerator SendConversationMessage(string userMessage, Action<string> onResult, Action<string> onError, string systemMessage = null)
         {
-            if (string.IsNullOrWhiteSpace(apiKey))
+            if (string.IsNullOrWhiteSpace(ResolvedApiKey))
             {
                 onError?.Invoke("API key is missing.");
                 yield break;
@@ -288,7 +293,7 @@ namespace MedicalExam
         /// </summary>
         public IEnumerator EvaluatePronunciationTurn(string userTranscript, Action<PronunciationTurnFeedback> onResult, Action<string> onError)
         {
-            if (string.IsNullOrWhiteSpace(apiKey))
+            if (string.IsNullOrWhiteSpace(ResolvedApiKey))
             {
                 onError?.Invoke("API key is missing.");
                 yield break;
@@ -489,7 +494,7 @@ namespace MedicalExam
                 request.uploadHandler = new UnityEngine.Networking.UploadHandlerRaw(bodyRaw);
                 request.downloadHandler = new UnityEngine.Networking.DownloadHandlerBuffer();
                 request.SetRequestHeader("Content-Type", "application/json");
-                request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                request.SetRequestHeader("Authorization", $"Bearer {ResolvedApiKey}");
 
                 yield return request.SendWebRequest();
 

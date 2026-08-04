@@ -5939,8 +5939,8 @@ namespace MedicalExam
         
         private string GetAPIKey()
         {
-            string apiKey = "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";
-            
+            string apiKey = APIKeyConfig.Instance != null ? APIKeyConfig.Instance.OpenAIApiKey : "";
+
             if (false) // conversationManager has been removed
             {
                 // var configField = conversationManager.GetType().GetField("openAIConfig",

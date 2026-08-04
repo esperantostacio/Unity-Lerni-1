@@ -1,3 +1,17 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:7188655c608b83426a6facb3ed879b7e75f33645c65df445310803ab2cf4b46d
-size 642
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6637f1adf3ef54969a9acd0ddb829ee2, type: 3}
+  m_Name: ElevenLabsConfig 1
+  m_EditorClassIdentifier: Assembly-CSharp::ElevenLabs.ElevenLabsConfig
+  apiKey:
+  websocketUrl: wss://api.elevenlabs.io/v1
+  signedWebsocketUrl: https://api.elevenlabs.io/v1/convai/conversation/get_signed_url

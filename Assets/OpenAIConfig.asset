@@ -1,3 +1,18 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:ca22c91670b012ea0b719d4d6d64468460d91a3db60f58f3e767ad3f709bb4ee
-size 774
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 767208bd6749940fabcc8fc64e516708, type: 3}
+  m_Name: OpenAIConfig
+  m_EditorClassIdentifier: com.convai.openai::OpenAI.OpenAIConfig
+  apiKey:
+  realtimeConvWebsocketUrl: wss://api.openai.com/v1/realtime
+  chatModelId: gpt-4o-mini
+  fineTunedModelId: ft:gpt-4o-2024-08-06:personal:artztopatien:CjRVLdX7

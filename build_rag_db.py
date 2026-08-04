@@ -54,8 +54,8 @@ CASE_CHUNK_OVERLAP_CHARS = 180
 # ── API Key ─────────────────────────────────────────────────────────────
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "").strip()
 if not OPENAI_API_KEY:
-    # Fallback: read from project (same key used in Unity)
-    OPENAI_API_KEY = "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"
+    print("ERROR: Set the OPENAI_API_KEY environment variable before running this script.")
+    sys.exit(1)
 
 
 def parse_pdf(filepath: str) -> list[dict]:
