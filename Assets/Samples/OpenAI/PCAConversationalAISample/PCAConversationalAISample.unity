@@ -7707,6 +7707,7 @@ GameObject:
   - component: {fileID: 553922143}
   - component: {fileID: 553922142}
   - component: {fileID: 553922141}
+  - component: {fileID: 553922146}
   m_Layer: 0
   m_Name: '[BuildingBlock] Camera Rig'
   m_TagString: Untagged
@@ -7861,6 +7862,30 @@ MonoBehaviour:
   installationRoutineCheckpoint:
     _installationRoutineId: 
     _installationVariants: []
+--- !u!114 &553922146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 553922140}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14a59e7da09a4e15a1219d6f075c4048, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  interactionRigRoot: {fileID: 1931082808}
+  enableControllerInput: 1
+  enableHandInput: 1
+  enableRayInteractors: 1
+  enablePokeInteractors: 1
+  enableGrabInteractors: 0
+  enableDistanceGrabInteractors: 0
+  disableJoystickLocomotion: 1
+  extraNamesToEnable: []
+  extraNamesToDisable: []
+  logRigTreeOnStart: 1
+  dryRun: 0
 --- !u!4 &553922145
 Transform:
   m_ObjectHideFlags: 0

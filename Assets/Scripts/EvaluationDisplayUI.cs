@@ -687,6 +687,21 @@ namespace MedicalExam
         }
 
         /// <summary>
+        /// Single exit point for a failed evaluation. Hides the spinner and always notifies the caller
+        /// with null, so MedicalExamManager can put the panel on screen with an error instead of
+        /// leaving the user staring at a loading indicator forever.
+        /// </summary>
+        private void AbortEvaluation(System.Action<ExamEvaluation> onComplete, string reason)
+        {
+            Debug.LogError($"[EvaluationDisplayUI] Evaluation aborted: {reason}");
+
+            if (loadingIndicator != null)
+                loadingIndicator.SetActive(false);
+
+            onComplete?.Invoke(null);
+        }
+
+        /// <summary>
         /// Single-request evaluation:
         /// Sends the full conversation transcript PLUS the realtime AI feedback (at the end)
         /// to GPT-4, asking it to output JSON with 5D scores (legacy 0-3 each, newer up to 3.99 each) + feedback per dimension + overall feedback.
@@ -706,7 +721,7 @@ namespace MedicalExam
             // In that case we evaluate based on transcript (and optional Whisper transcript injected upstream).
             if (transcriptEmpty && feedbackEmpty)
             {
-                Debug.LogError("[EvaluationDisplayUI] Both conversation transcript and realtime feedback are empty! Cannot evaluate.");
+                AbortEvaluation(onComplete, "both conversation transcript and realtime feedback are empty.");
                 return;
             }
 
@@ -718,7 +733,7 @@ namespace MedicalExam
 
             if (string.IsNullOrWhiteSpace(apiKey))
             {
-                Debug.LogError("[EvaluationDisplayUI] API key is required for evaluation!");
+                AbortEvaluation(onComplete, "no OpenAI API key configured.");
                 return;
             }
 
@@ -956,9 +971,7 @@ If any score is missing, set it to 0. Make sure all numbers are valid and within
             string promptTemplate = ApplyEvaluationPromptPlaceholders(RemotePromptManager.GetForScenario(promptTemplateKey, MedicalExamManager.ActiveScenarioId, ""), roleType, scenarioName);
             if (string.IsNullOrWhiteSpace(promptTemplate))
             {
-                Debug.LogError($"[EvaluationDisplayUI] CRITICAL: {promptTemplateKey} not found in remote CSV! Evaluation cannot proceed.");
-                if (loadingIndicator != null)
-                    loadingIndicator.SetActive(false);
+                AbortEvaluation(onComplete, $"{promptTemplateKey} not found in the remote prompt CSV.");
                 yield break;
             }
 
@@ -969,9 +982,7 @@ If any score is missing, set it to 0. Make sure all numbers are valid and within
             string systemMsg = ApplyEvaluationPromptPlaceholders(RemotePromptManager.GetForScenario(systemMsgKey, MedicalExamManager.ActiveScenarioId, ""), roleType, scenarioName);
             if (string.IsNullOrWhiteSpace(systemMsg))
             {
-                Debug.LogError($"[EvaluationDisplayUI] CRITICAL: {systemMsgKey} not found in remote CSV! Evaluation cannot proceed.");
-                if (loadingIndicator != null)
-                    loadingIndicator.SetActive(false);
+                AbortEvaluation(onComplete, $"{systemMsgKey} not found in the remote prompt CSV.");
                 yield break;
             }
 
@@ -1022,6 +1033,8 @@ If any score is missing, set it to 0. Make sure all numbers are valid and within
                         extractedAssistantContent: "",
                         extractedJsonObject: "",
                         parseError: $"HTTP_ERROR: {request.error} (code={request.responseCode})");
+
+                    AbortEvaluation(onComplete, $"chat completion request failed ({request.error}, HTTP {request.responseCode}).");
                     yield break;
                 }
 
@@ -1029,6 +1042,7 @@ If any score is missing, set it to 0. Make sure all numbers are valid and within
                 JObject root = null;
                 JToken contentToken = null;
                 string content = null;
+                string httpJsonError = null;
 
                 try
                 {
@@ -1038,7 +1052,12 @@ If any score is missing, set it to 0. Make sure all numbers are valid and within
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[EvaluationDisplayUI] Error parsing HTTP response JSON: {ex.Message}");
+                    httpJsonError = ex.Message;
+                }
+
+                if (httpJsonError != null)
+                {
+                    AbortEvaluation(onComplete, $"could not parse the HTTP response as JSON: {httpJsonError}");
                     yield break;
                 }
 
@@ -1052,6 +1071,8 @@ If any score is missing, set it to 0. Make sure all numbers are valid and within
                         extractedAssistantContent: "",
                         extractedJsonObject: "",
                         parseError: "EMPTY_CONTENT");
+
+                    AbortEvaluation(onComplete, "the model returned an empty message.");
                     yield break;
                 }
 
@@ -1066,6 +1087,8 @@ If any score is missing, set it to 0. Make sure all numbers are valid and within
                         extractedAssistantContent: content,
                         extractedJsonObject: "",
                         parseError: parseError);
+
+                    AbortEvaluation(onComplete, $"no JSON object in the model reply: {parseError}");
                     yield break;
                 }
 
@@ -1200,6 +1223,7 @@ If any score is missing, set it to 0. Make sure all numbers are valid and within
                 catch (Exception ex)
                 {
                     Debug.LogError($"[EvaluationDisplayUI] Error building evaluation from parsed data: {ex.Message}");
+                    AbortEvaluation(onComplete, $"could not map the model output onto ExamEvaluation: {ex.Message}");
                 }
             }
         }

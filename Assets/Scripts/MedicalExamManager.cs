@@ -542,6 +542,8 @@ namespace MedicalExam
         [SerializeField] private GameObject evaluationResultsContent; // The actual results (sliders, feedback)
         [SerializeField] private GameObject feedbackPanel; // Parent container for feedback UI
         [SerializeField] private EvaluationDisplayUI evaluationDisplayUI;
+        [Tooltip("Seconds to wait after the evaluation starts before forcing the panel on screen anyway. Set to 0 to disable the watchdog.")]
+        [SerializeField] private float evaluationResultTimeoutSeconds = 90f;
 
         [Header("Evaluation Text Output")]
         [Tooltip("Optional: a TextMeshProUGUI that will display the final evaluator's generalFeedback (or fallback overallFeedback/feedbackText).")]
@@ -954,6 +956,8 @@ namespace MedicalExam
         private float _lastAudioStopTime = 0f; // Track when audio stopped
         private const float AUDIO_STOP_DELAY = 0.5f; // Wait 0.5 seconds before switching to recording
         private bool _evaluationUIShown = false; // Track if evaluation/loading UI has been displayed
+        private bool _evaluationResultShown = false; // Track if the RESULT (not just the spinner) reached the screen
+        private Coroutine _evaluationWatchdogCoroutine;
         private bool _feedbackParseTriggered = false; // Track if the second AI parse has been fired
         private float _lastFeedbackFragmentTime = 0f; // Last time we received feedback during evaluation
         private float _parseStartTime = 0f; // When we triggered the second AI parse
@@ -2268,6 +2272,8 @@ namespace MedicalExam
             _examCompletionTriggered = false;
             _evaluationCompleted = false;
             _evaluationUIShown = false;
+            _evaluationResultShown = false;
+            StopEvaluationWatchdog();
             _feedbackParseTriggered = false;
             _deepEvalTriggered = false;
             _realtimeSessionReady = false;
@@ -2652,6 +2658,8 @@ namespace MedicalExam
             _currentAISentenceBuffer = ""; // Reset sentence buffer
             _lastAITranscriptTime = 0f;
             _evaluationUIShown = false; // Reset evaluation UI state for new run
+            _evaluationResultShown = false;
+            StopEvaluationWatchdog();
             _feedbackParseTriggered = false; // Reset parse trigger flag
             _lastFeedbackFragmentTime = 0f;
             _feedbackQuietStart = 0f;
@@ -4477,8 +4485,8 @@ namespace MedicalExam
             string apiKey = GetAPIKey();
             if (string.IsNullOrEmpty(apiKey))
             {
-                Debug.LogError("[MedicalExamManager] ❌ No API key found - cannot parse evaluation");
                 _processingEvaluation = false;
+                ShowEvaluationFailurePanel("no OpenAI API key is configured.");
                 return;
             }
 
@@ -4501,8 +4509,8 @@ namespace MedicalExam
             }
             else
             {
-                Debug.LogError("[MedicalExamManager] ❌ EvaluationDisplayUI is null!");
                 _processingEvaluation = false;
+                ShowEvaluationFailurePanel("EvaluationDisplayUI is not assigned on the Manager object.");
             }
         }
         
@@ -4548,6 +4556,7 @@ namespace MedicalExam
                 if (evaluationResultsContent != null)
                     evaluationResultsContent.SetActive(false);
                 Debug.Log("[MedicalExamManager] Evaluation UI already active; refreshed loading state.");
+                StartEvaluationWatchdog();
                 return;
             }
             
@@ -4577,6 +4586,9 @@ namespace MedicalExam
 
             // Mark as shown to avoid duplicate setup
             _evaluationUIShown = true;
+
+            // From this point the user is waiting on a result; guarantee one appears.
+            StartEvaluationWatchdog();
         }
         
         private void OnUserSpoke(string transcript)
@@ -5343,8 +5355,18 @@ namespace MedicalExam
         {
             // NOTE: This used to speak via the realtime agent, but conversationManager has been removed.
             // We now speak the final evaluation via ElevenLabs/OpenAI TTS (through GptAndWhisper) when enabled.
-            if (!speakFinalEvaluationViaElevenLabs) yield break;
-            if (evaluation == null) yield break;
+            if (evaluation == null)
+            {
+                ShowEvaluationFailurePanel("no evaluation object to narrate.");
+                yield break;
+            }
+
+            if (!speakFinalEvaluationViaElevenLabs)
+            {
+                // Narration is off — the scores still have to appear.
+                RevealEvaluationUI(evaluation, "TTS disabled");
+                yield break;
+            }
 
             // Give the UI a frame to update first
             yield return null;
@@ -5366,13 +5388,18 @@ namespace MedicalExam
             if (!hasAnyScore && !hasAnyText)
             {
                 Debug.LogWarning("[MedicalExamManager] Skipping spoken evaluation: evaluation appears empty (all zeros / no feedback). Check final evaluator output.");
+                // Still surface the panel — an empty result on screen beats an endless spinner.
+                RevealEvaluationUI(evaluation, "empty evaluation");
                 yield break;
             }
 
             // Build the spoken script and speak it in chunks.
             string speechText = BuildFinalEvaluationSpeechText(evaluation);
             if (string.IsNullOrWhiteSpace(speechText))
+            {
+                RevealEvaluationUI(evaluation, "nothing to narrate");
                 yield break;
+            }
 
             var chunks = SplitTextForTts(speechText, Mathf.Clamp(maxCharsPerFinalEvalTtsChunk, 200, 2000));
             Debug.Log($"[MedicalExamManager] Speaking final evaluation via OpenAI TTS in {chunks.Count} chunk(s). Total chars={speechText.Length}.");
@@ -5417,34 +5444,8 @@ namespace MedicalExam
 
                     // Wait 1.5s for the flip/spin animation to play before showing scores
                     yield return new WaitForSeconds(2.5f);
-                     if (activefeedbck != null && !activefeedbck.activeSelf)
-                        activefeedbck.SetActive(true);
-                    // Show feedbackPanel + evaluationPanel after animation trigger
-                    if (feedbackPanel != null)
-                        feedbackPanel.SetActive(true);
-                    if (evaluationPanel != null)
-                    {
-                        evaluationPanel.SetActive(true);
-                        Debug.Log("[MedicalExamManager] ✓ Evaluation panel shown (after animation delay)");
-                    }
 
-                    if (evaluationLoadingIndicator != null)
-                    {
-                        evaluationLoadingIndicator.SetActive(false);
-                        Debug.Log("[MedicalExamManager] ✓ Loading indicator hidden (AI started speaking)");
-                    }
-
-                    if (evaluationResultsContent != null)
-                    {
-                        evaluationResultsContent.SetActive(true);
-                        Debug.Log("[MedicalExamManager] ✓ Results content shown (AI started speaking)");
-                    }
-
-                    if (evaluationDisplayUI != null)
-                    {
-                        evaluationDisplayUI.DisplayEvaluation(evaluation);
-                        Debug.Log("[MedicalExamManager] ✓ Evaluation displayed in UI (AI started speaking)");
-                    }
+                    RevealEvaluationUI(evaluation, "TTS started");
                 }
 
                 // Wait until playback ends (best-effort).
@@ -5690,7 +5691,7 @@ namespace MedicalExam
             // If both transcript and realtime feedback are empty, avoid dropping the request.
             if (string.IsNullOrWhiteSpace(transcriptForGpt) && string.IsNullOrWhiteSpace(_realtimeAIFeedback))
             {
-                Debug.LogWarning("[MedicalExamManager] No transcript or realtime feedback available. Cannot evaluate.");
+                ShowEvaluationFailurePanel("no transcript and no realtime feedback were captured during the conversation.");
                 yield break;
             }
 
@@ -5745,7 +5746,7 @@ namespace MedicalExam
 
             if (evaluationDisplayUI == null)
             {
-                Debug.LogError("[MedicalExamManager] evaluationDisplayUI is not assigned. Cannot run generic final evaluation or display sliders.");
+                ShowEvaluationFailurePanel("EvaluationDisplayUI is not assigned on the Manager object.");
                 yield break;
             }
 
@@ -5911,8 +5912,8 @@ namespace MedicalExam
             // Check if conversation log is empty
             if (string.IsNullOrEmpty(_fullConversationLog))
             {
-                Debug.LogError("[MedicalExamManager] ❌ Conversation log is EMPTY! No evaluation can be generated.");
                 Debug.LogError("[MedicalExamManager] Make sure onAgentTranscript and onUserTranscript events are working!");
+                ShowEvaluationFailurePanel("the conversation log is empty, so there is nothing to evaluate.");
                 return;
             }
             
@@ -5921,7 +5922,7 @@ namespace MedicalExam
             
             if (string.IsNullOrEmpty(apiKey))
             {
-                Debug.LogError("[MedicalExamManager] ❌ No API key found - cannot generate evaluation");
+                ShowEvaluationFailurePanel("no OpenAI API key is configured.");
                 return;
             }
             
@@ -6091,25 +6092,7 @@ namespace MedicalExam
 
             if (evaluation == null)
             {
-                Debug.LogError("[MedicalExamManager] ❌ Evaluation is NULL — showing error to user.");
-                var errorEval = new ExamEvaluation
-                {
-                    scenarioName = GetScenarioName(),
-                    roleType = selectedRole == RoleType.DoctorToDoctor
-                        ? ExamEvaluation.RoleType.DoctorToDoctor
-                        : ExamEvaluation.RoleType.DoctorToPatient,
-                    overallFeedback = "Auswertung konnte nicht geladen werden. Bitte prüfen Sie die Netzwerkverbindung und die API-Konfiguration, dann versuchen Sie es erneut.",
-                    feedbackText = "Evaluation error: AI response could not be parsed. Check Unity Console for details.",
-                    passed = false,
-                    overallScore = 0f
-                };
-                if (evaluationPanel != null) evaluationPanel.SetActive(true);
-                if (feedbackPanel != null) feedbackPanel.SetActive(true);
-                if (evaluationDisplayUI != null) evaluationDisplayUI.gameObject.SetActive(true);
-                if (evaluationLoadingIndicator != null) evaluationLoadingIndicator.SetActive(false);
-                if (evaluationResultsContent != null) evaluationResultsContent.SetActive(true);
-                evaluationDisplayUI?.DisplayEvaluation(errorEval);
-                _evaluationUIShown = true;
+                ShowEvaluationFailurePanel("the AI response could not be parsed (see the console for details).");
                 return;
             }
 
@@ -6190,36 +6173,106 @@ namespace MedicalExam
 
         }
         
+        /// <summary>
+        /// The single place that puts the evaluation panel on screen. Every path that ends a run —
+        /// spoken feedback, silent feedback, parse failure, watchdog timeout — goes through here, so
+        /// the user can never be left looking at the loading spinner.
+        /// </summary>
+        private void RevealEvaluationUI(ExamEvaluation evaluation, string source)
+        {
+            StopEvaluationWatchdog();
+
+            if (activefeedbck != null && !activefeedbck.activeSelf)
+                activefeedbck.SetActive(true);
+
+            if (feedbackPanel != null)
+                feedbackPanel.SetActive(true);
+
+            if (evaluationPanel != null)
+                evaluationPanel.SetActive(true);
+
+            if (evaluationDisplayUI != null && !evaluationDisplayUI.gameObject.activeSelf)
+                evaluationDisplayUI.gameObject.SetActive(true);
+
+            if (evaluationLoadingIndicator != null)
+                evaluationLoadingIndicator.SetActive(false);
+
+            if (evaluationResultsContent != null)
+                evaluationResultsContent.SetActive(true);
+
+            if (evaluationDisplayUI != null && evaluation != null)
+                evaluationDisplayUI.DisplayEvaluation(evaluation);
+
+            _evaluationUIShown = true;
+            _evaluationResultShown = true;
+
+            Debug.Log($"[MedicalExamManager] ✓ Evaluation panel shown (source: {source})");
+        }
+
+        /// <summary>
+        /// Builds a placeholder evaluation carrying an error message and shows it, so a failed
+        /// evaluation still produces visible feedback instead of nothing at all.
+        /// </summary>
+        private void ShowEvaluationFailurePanel(string reason)
+        {
+            Debug.LogError($"[MedicalExamManager] ❌ Evaluation failed: {reason}");
+
+            var errorEval = new ExamEvaluation
+            {
+                scenarioName = GetScenarioName(),
+                roleType = selectedRole == RoleType.DoctorToDoctor
+                    ? ExamEvaluation.RoleType.DoctorToDoctor
+                    : ExamEvaluation.RoleType.DoctorToPatient,
+                overallFeedback = "Die Auswertung konnte nicht erstellt werden. Bitte prüfen Sie Netzwerkverbindung und API-Konfiguration und versuchen Sie es erneut.",
+                feedbackText = $"Evaluation failed: {reason}",
+                passed = false,
+                overallScore = 0f
+            };
+
+            RevealEvaluationUI(errorEval, "failure");
+        }
+
+        private void StartEvaluationWatchdog()
+        {
+            StopEvaluationWatchdog();
+            if (evaluationResultTimeoutSeconds > 0f)
+                _evaluationWatchdogCoroutine = StartCoroutine(EvaluationWatchdog());
+        }
+
+        private void StopEvaluationWatchdog()
+        {
+            if (_evaluationWatchdogCoroutine != null)
+            {
+                StopCoroutine(_evaluationWatchdogCoroutine);
+                _evaluationWatchdogCoroutine = null;
+            }
+        }
+
+        /// <summary>
+        /// Last line of defence: if no result reached the screen within the timeout, show one anyway.
+        /// </summary>
+        private IEnumerator EvaluationWatchdog()
+        {
+            yield return new WaitForSeconds(evaluationResultTimeoutSeconds);
+            _evaluationWatchdogCoroutine = null;
+
+            if (_evaluationResultShown)
+                yield break;
+
+            if (_currentEvaluation != null)
+            {
+                Debug.LogWarning("[MedicalExamManager] ⚠️ Evaluation watchdog fired: result existed but was never displayed. Showing it now.");
+                RevealEvaluationUI(_currentEvaluation, "watchdog");
+                yield break;
+            }
+
+            ShowEvaluationFailurePanel($"no result after {evaluationResultTimeoutSeconds:0}s (see the console for the underlying error).");
+        }
+
         private IEnumerator ShowEvaluationUIAfterDelay(ExamEvaluation evaluation, float delay)
         {
             yield return new WaitForSeconds(delay);
-
-            // Show evaluationPanel 2s after animation trigger
-            if (feedbackPanel != null)
-                feedbackPanel.SetActive(true);
-            if (evaluationPanel != null)
-            {
-                evaluationPanel.SetActive(true);
-                Debug.Log("[MedicalExamManager] ✓ Evaluation panel shown (after animation delay)");
-            }
-
-            if (evaluationLoadingIndicator != null)
-            {
-                evaluationLoadingIndicator.SetActive(false);
-                Debug.Log("[MedicalExamManager] ✓ Loading indicator hidden (after delay)");
-            }
-
-            if (evaluationResultsContent != null)
-            {
-                evaluationResultsContent.SetActive(true);
-                Debug.Log("[MedicalExamManager] ✓ Results content shown (after delay)");
-            }
-
-            if (evaluationDisplayUI != null)
-            {
-                evaluationDisplayUI.DisplayEvaluation(evaluation);
-                Debug.Log("[MedicalExamManager] ✓ Evaluation displayed in UI (after delay)");
-            }
+            RevealEvaluationUI(evaluation, "no-TTS delay");
         }
 
         private void ParseAndLogScores(ExamEvaluation evaluation)
