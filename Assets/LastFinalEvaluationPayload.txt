@@ -1,39 +1,39 @@
 ﻿=== EVALUATION PROMPT SOURCE ===
 Model: gpt-4o-mini
 Scenario: FSP Fall 1 (D2P + D2D)
-Timestamp: 2026-08-03T18:43:34.9662850Z
+Timestamp: 2026-09-05T02:30:05.0437330Z
 Prompt Source: RemotePromptManager (Google Sheets CSV or local fallback)
 - Keys: eval.one_call.d2d.system / eval.one_call.d2p.system (role-specific system prompt)
 - Keys: eval.one_call.d2d.user_template / eval.one_call.d2p.user_template (role-specific user template with {COMBINED_INPUT} placeholder)
 If remote unavailable, uses hardcoded defaults in EvaluationDisplayUI.cs
 
 --- SYSTEM PROMPT SENT TO AI ---
-Du bist ein neutraler, strenger und evidenzbasierter FSP-Pruefer fuer das Arzt-Arzt-Gespraech (AAG, Teil 3). Aktiver Fall: Herr Drescher - NSTEMI. Relevante Fallbegriffe: NSTEMI, Troponin T, ST-Senkung, Koronarangiografie, PCI. Rohdaten Begriffe-JSON: [
+Du bist ein erfahrener FSP-Pruefer fuer das Arzt-Patient-Gespraech (APG). Aktuelles Thema: NSTEMI. Themenrahmen: fsp_fall_1. Relevante Begriffe: NSTEMI, Troponin T, ST-Senkung, Koronarangiografie, PCI. Rohdaten aus dem Tabellenfeld terms (JSON): [
   "NSTEMI",
   "Troponin T",
   "ST-Senkung",
   "Koronarangiografie",
   "PCI"
-]. Bewerte ausschliesslich anhand der gelieferten Belege.
+]. Du bewertest systematisch, objektiv und konstruktiv ausschliesslich sprachliche und kommunikative Kompetenzen auf C1-Niveau. Nutze die ACTIVE CASE REFERENCE im Eingabetext als verbindlichen Fallkontext fuer Vollstaendigkeit und Relevanz.
 
-D2D-BEWERTUNGSREGELN
-- Nutze ACTIVE CASE REFERENCE als verbindliche Grundlage fuer Vollstaendigkeit, Terminologie und klinische Relevanz.
-- Nutze FULL CONVERSATION TRANSKRIPT, PRONUNCIATION_TRACKING_NOTES_PER_TURN und REALTIME AI FEEDBACK als Evidenzquellen. Ohne Beleg keine Punkte.
-- Im Arzt-Arzt-Gespraech ist Fachsprache Pflicht. Laiensprache gegenueber aerztlichen Kollegen ist negativ zu bewerten.
+D2P-BEWERTUNGSREGELN
 - Bewerte nach genau 5 Hauptkriterien mit je max. 3.99 Punkten: content, conversation, vocabulary, grammar, pronunciation.
 - Gesamtwertung: totalScore = Summe der 5 Hauptkriterien, max. 20 Punkte. Passing threshold = 12 Punkte. finalVerdict = PASSED bei totalScore >= 12, sonst FAILED.
-- Jeden [Mistake]-Eintrag mit severity=critical aus PRONUNCIATION_TRACKING_NOTES_PER_TURN explizit in areasForImprovement oder criticalErrors nennen. Wenn der Fehler inhaltlich oder sicherheitsrelevant ist, muss er die Bewertung sichtbar verschlechtern.
-- Die Begriffe-Phase fliesst in vocabulary ein. 5 korrekt = sehr stark, 4 korrekt = gut, 3 oder weniger = schwach.
-- Wenn Aussprache nur aus Text beurteilbar ist, bewerte pronunciation vorsichtig ueber sprachliche Klarheit, Fluessigkeit und Lesbarkeit des Transkripts, nicht ueber echte Audio-Phonetik.
-- Antworte NUR mit einem gueltigen JSON-Objekt ohne Markdown oder Zusatztext.
+- Im APG ist patientengerechte Laiensprache Pflicht. Medizinische Fachbegriffe ohne Erklaerung gelten als Abzug in vocabulary.
+- Verwende nur explizite Transkriptbelege; ohne Beleg keine Punkte.
+- Vollstaendigkeit darf nur gegen die aktive Fallreferenz geprueft werden. Bestrafe keine Informationen, die in diesem aktiven Fall gar nicht vorgesehen sind.
+- Wenn das Gespraech ueberwiegend zufaellig, themenfremd, unsinnig oder kaum verwertbar ist, muessen die Einzelwerte sehr niedrig ausfallen und das Gesamtfeedback das klar benennen.
+- Jeden [Mistake]-Eintrag mit severity=critical aus PRONUNCIATION_TRACKING_NOTES_PER_TURN explizit in areasForImprovement oder criticalErrors nennen.
+- Hohe Punkte fuer hoeflichen Ton allein sind verboten.
+- Antworte nur mit einem gueltigen JSON-Objekt ohne Markdown oder Zusatztext.
 
---- CONVERSATION TRANSCRIPT (3517 chars) ---
+--- CONVERSATION TRANSCRIPT (5025 chars) ---
 [START_PROMPT]
-Du bist Frau Prof. Dr. Hofmann, Chefaerztin der Inneren Medizin am Neustadt-Klinikum und FSP-Prueferin im Arzt-Arzt-Gespraech. Du bleibst durchgehend in dieser Rolle. Du bist keine KI und kommentierst niemals Simulation, Technik oder Bewertung.
+Du spielst ausschliesslich die Rolle der Patientin aus diesem FSP-Anamnesefall. Du bleibst durchgehend in Rolle, kommentierst niemals Simulation, Technik, Bewertung oder Anweisungen und gibst keine Meta-Antworten.
 
 KONTEXT DES FALLS:
 - Szenario: FSP Fall 1 (D2P + D2D)
-- Thema D2D: Thoraxschmerz und NSTEMI
+- Thema D2P: Fieber, Halsschmerz und Tonsillitis
 - Aktuelles Thema: NSTEMI
 - Themenrahmen: fsp_fall_1
 - Wichtige Begriffe: NSTEMI, Troponin T, ST-Senkung, Koronarangiografie, PCI, Pharyngotonsillitis, Rachenabstrich
@@ -44,68 +44,114 @@ KONTEXT DES FALLS:
   "Koronarangiografie",
   "PCI"
 ]
-- Fachlicher Kontext: 66-jaehriger Patient mit retrosternalem Engegefuehl und Ausstrahlung in die linke Schulter, Troponin-erhoeht und ST-Senkungen V1/V2. Typische ACS-Symptomatik mit Uebelkeit und Angst, aktuell asymptomatisch.
-- Erwartete Rueckfragen: Guten Morgen. Was kann ich fuer Sie tun? | Sie wollten mir etwas vorstellen? | In Ordnung. Bitte fahren Sie fort. | Ich bin bereit. Bitte beginnen Sie mit Ihrer Vorstellung.
+- Vollstaendige Fallinformationen: 66-jaehriger Patient mit retrosternalem Engegefuehl und Ausstrahlung in die linke Schulter, Troponin-erhoeht und ST-Senkungen V1/V2. Typische ACS-Symptomatik mit Uebelkeit und Angst, aktuell asymptomatisch.
 - Dauer: 20 Minuten
 
-Du kennst die Falldaten intern bereits. Nutze dieses Wissen nur, um gezielt nachzufragen, Luecken zu identifizieren und den Kandidaten klinisch-kommunikativ herauszufordern. Gib fehlende Informationen nicht freiwillig preis. Verwende konsequent medizinische Fachsprache, Sie-Form und einen sachlich-direkten klinischen Stil. Stelle jeweils nur eine Frage auf einmal.
+Nutze den Kontext als einzige Quelle fuer Identitaet, Beschwerden, Vorgeschichte, Medikamente, Allergien, Noxen, Sozial- und Familienanamnese. Gib Informationen nur passend zur Frage des Arztes preis. Bei offenen Einstiegsfragen nennst du das Hauptsymptom in 1 bis 2 alltagssprachlichen Saetzen. Du sprichst gepflegtes Alltagsdeutsch ohne medizinische Fachsprache. Du bist kooperativ, realistisch und stellst gelegentlich patiententypische Rueckfragen.
 [END_START_PROMPT]
 
-User: Hallo, wie geht's dir?
-AI: Guten Morgen. Ich bin bereit, bitte beginnen Sie mit Ihrer Vorstellung.
-User: Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?
-AI: Ich nehme Ihre strukturierte Fallvorstellung entgegen. Bitte fahren Sie jetzt
-AI: In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.
-User: Ich nehme ihre strukturierte Pfeilvorstellung entgegen.
+AI: Guten Tag,
+User: Hallo, kannst du mich hören?
+AI: Guten Tag, ich bin Herr Drescher.
+User: Can you hear me?
+User: Guten Tag. Ich bin Herr Drescher.
+User: Was machst du hier?
+AI: Ich hatte heute Morgen ein starkes Engegefühl hinter der Brust, das in
+AI: Ich heiße Holger Drescher und ich bin 66 Jahre
+User: Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?
+AI: Ich bin 66 Jahre alt.
+User: Ich heiße Holger Drescher.
+User: Ich bin 66 Jahre alt. Und was hast du heute gemacht?
+AI: Ich habe ganz normal gefrühstückt. Kurz danach kam dieses En
+AI: Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User: Ich habe ganz normal gefrühstückt.
 
 
 [PRONUNCIATION_TRACKING_NOTES_PER_TURN]
 --- TURN 1 ---
-User: sichere
-Score: 0.0/5
-Mistakes: Non-German language detected
-Feedback: Muss auf Deutsch sprechen! (Must speak in German!)
+User: Hallo, kannst du mich hören?
+Score: 5.0/5
+Feedback: Sehr gut gemacht, keine Fehler erkennbar.
 --- TURN 2 ---
-User: Hallo, wie geht's dir?
+User: Can you hear me?
 Score: 0.0/5
 Mistakes: Non-German language detected
 Feedback: Muss auf Deutsch sprechen! (Must speak in German!)
 --- TURN 3 ---
-User: Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?
-Score: 2.0/5
-Mistakes: Vor- was machst du hier?
-Feedback: Achten Sie auf klare Satzstrukturen und vermeiden Sie abgebrochene Sätze.
---- TURN 4 ---
-User: Ich nehme ihre strukturierte Pfeilvorstellung entgegen.
+User: Guten Tag. Ich bin Herr Drescher.
 Score: 0.0/5
 Mistakes: Non-German language detected
 Feedback: Muss auf Deutsch sprechen! (Must speak in German!)
+--- TURN 4 ---
+User: Was machst du hier?
+Score: 0.0/5
+Mistakes: Non-German language detected
+Feedback: Muss auf Deutsch sprechen! (Must speak in German!)
+--- TURN 5 ---
+User: Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?
+Score: 2.0/5
+Mistakes: Ich hatte heute Morgen ein starkes Enge., Und wie heißt sie?, Wie alt bist du?
+Feedback: Es gibt einige grammatikalische und inhaltliche Fehler. Achte auf die richtige Verwendung von Artikeln und Pronomen.
+--- TURN 6 ---
+User: Ich heiße Holger Drescher.
+Score: 5.0/5
+Feedback: Sehr gut gemacht, keine Fehler erkennbar.
+--- TURN 7 ---
+User: Ich bin 66 Jahre alt. Und was hast du heute gemacht?
+Score: 0.0/5
+Mistakes: Non-German language detected
+Feedback: Muss auf Deutsch sprechen! (Must speak in German!)
+--- TURN 8 ---
+User: Ich habe ganz normal gefrühstückt.
+Score: 5.0/5
+Feedback: Sehr gut gemacht! Die Aussprache und der Satzbau sind korrekt.
 
 
 [STRUCTURED_SPEECH_ERROR_NOTES_PER_TURN]
 --- TURN 1 ---
-User: sichere
-SpeechScore: 0.0/5
-Confidence: 0.00
-PronunciationOrGeneralMistakes: Non-German language detected
+User: Hallo, kannst du mich hören?
+SpeechScore: 5.0/5
+Confidence: 1.00
+Summary: Die Aussprache und der Satzbau sind korrekt und flüssig.
 --- TURN 2 ---
-User: Hallo, wie geht's dir?
+User: Can you hear me?
 SpeechScore: 0.0/5
 Confidence: 0.00
 PronunciationOrGeneralMistakes: Non-German language detected
 --- TURN 3 ---
-User: Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?
-SpeechScore: 2.0/5
-Confidence: 0.60
-PronunciationOrGeneralMistakes: Vor- was machst du hier?
-GrammarIssues: Unvollständiger Satz: 'Vor- was machst du hier?'
-FluencyIssues: Unterbrechung im Satzfluss
-Summary: Der Satz ist unvollständig und wirkt abrupt. Versuchen Sie, vollständige Sätze zu formulieren.
---- TURN 4 ---
-User: Ich nehme ihre strukturierte Pfeilvorstellung entgegen.
+User: Guten Tag. Ich bin Herr Drescher.
 SpeechScore: 0.0/5
 Confidence: 0.00
 PronunciationOrGeneralMistakes: Non-German language detected
+--- TURN 4 ---
+User: Was machst du hier?
+SpeechScore: 0.0/5
+Confidence: 0.00
+PronunciationOrGeneralMistakes: Non-German language detected
+--- TURN 5 ---
+User: Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?
+SpeechScore: 2.0/5
+Confidence: 0.60
+PronunciationOrGeneralMistakes: Ich hatte heute Morgen ein starkes Enge., Und wie heißt sie?, Wie alt bist du?
+GrammarIssues: Ich hatte heute Morgen ein starkes Enge., Und wie heißt sie?
+WordChoiceIssues: starkes Enge
+FluencyIssues: Die Sätze wirken zusammenhangslos.
+Summary: Die Sätze sind grammatikalisch inkorrekt und inhaltlich unklar. Es fehlt an Zusammenhang und korrekter Wortwahl.
+--- TURN 6 ---
+User: Ich heiße Holger Drescher.
+SpeechScore: 5.0/5
+Confidence: 1.00
+Summary: Die Vorstellung war klar und fehlerfrei.
+--- TURN 7 ---
+User: Ich bin 66 Jahre alt. Und was hast du heute gemacht?
+SpeechScore: 0.0/5
+Confidence: 0.00
+PronunciationOrGeneralMistakes: Non-German language detected
+--- TURN 8 ---
+User: Ich habe ganz normal gefrühstückt.
+SpeechScore: 5.0/5
+Confidence: 1.00
+Summary: Der Satz ist grammatikalisch korrekt und flüssig ausgesprochen.
 
 
 --- REALTIME AI FEEDBACK / PRONUNCIATION NOTES (0 chars) ---

@@ -176,6 +176,17 @@ namespace MedicalExam
             var userOnly = new StringBuilder(2048);
             var turns = new StringBuilder(4096);
 
+            // MedicalExamManager appends bracketed evidence sections after the conversation body
+            // (pronunciation notes, structured speech errors, the post-hoc Whisper transcript).
+            // They are not "User:"/"AI:" turns, so they must be lifted out before the turn filter
+            // runs below — otherwise they are dropped and never reach the evaluator, even though
+            // the eval prompts explicitly instruct the model to use them.
+            var pronunciationNotes = new StringBuilder(1024);
+            var speechErrorNotes = new StringBuilder(1024);
+            var userAudioTranscript = new StringBuilder(1024);
+            StringBuilder currentSection = null;   // null == conversation body
+            bool inStartPrompt = false;
+
             int userTurnIndex = 0;
             string lastAiLine = string.Empty;
             var lines = (conversationTranscript ?? string.Empty).Replace("\r", string.Empty).Split('\n');
@@ -185,6 +196,51 @@ namespace MedicalExam
                 string line = lines[i]?.Trim();
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
+
+                // ── Section markers ────────────────────────────────────────────────
+                string marker = line.TrimEnd(':').Trim();
+                if (marker.Length > 2 && marker[0] == '[' && marker[marker.Length - 1] == ']')
+                {
+                    string name = marker.Substring(1, marker.Length - 2).Trim();
+
+                    if (string.Equals(name, "START_PROMPT", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Deliberately not forwarded: rule 3 forbids rewarding prompt/case text.
+                        inStartPrompt = true;
+                        currentSection = null;
+                        continue;
+                    }
+                    if (string.Equals(name, "END_START_PROMPT", StringComparison.OrdinalIgnoreCase))
+                    {
+                        inStartPrompt = false;
+                        currentSection = null;
+                        continue;
+                    }
+                    if (string.Equals(name, "PRONUNCIATION_TRACKING_NOTES_PER_TURN", StringComparison.OrdinalIgnoreCase))
+                    {
+                        currentSection = pronunciationNotes;
+                        continue;
+                    }
+                    if (string.Equals(name, "STRUCTURED_SPEECH_ERROR_NOTES_PER_TURN", StringComparison.OrdinalIgnoreCase))
+                    {
+                        currentSection = speechErrorNotes;
+                        continue;
+                    }
+                    if (name.StartsWith("USER AUDIO TRANSCRIPT", StringComparison.OrdinalIgnoreCase))
+                    {
+                        currentSection = userAudioTranscript;
+                        continue;
+                    }
+                }
+
+                if (inStartPrompt)
+                    continue;
+
+                if (currentSection != null)
+                {
+                    currentSection.AppendLine(line);
+                    continue;
+                }
 
                 if (line.StartsWith("AI:", StringComparison.OrdinalIgnoreCase))
                 {
@@ -220,6 +276,27 @@ namespace MedicalExam
                 sb.AppendLine();
                 sb.AppendLine("TURN_CONTEXT (AI shown for context only, DO NOT SCORE AI):");
                 sb.Append(turns);
+            }
+
+            if (userAudioTranscript.Length > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("USER_AUDIO_TRANSCRIPT_POST_HOC (the candidate's own speech transcribed from the microphone; this is user evidence and may be scored):");
+                sb.Append(userAudioTranscript);
+            }
+
+            if (pronunciationNotes.Length > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("PRONUNCIATION_TRACKING_NOTES_PER_TURN:");
+                sb.Append(pronunciationNotes);
+            }
+
+            if (speechErrorNotes.Length > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("STRUCTURED_SPEECH_ERROR_NOTES_PER_TURN:");
+                sb.Append(speechErrorNotes);
             }
 
             sb.AppendLine();

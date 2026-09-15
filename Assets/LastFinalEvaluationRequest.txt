@@ -1,34 +1,34 @@
 ﻿=== FINAL EVALUATOR REQUEST DUMP ===
-UTC: 2026-08-03T18:43:34.9710760Z
+UTC: 2026-09-05T02:30:05.0491420Z
 URL: https://api.openai.com/v1/chat/completions
 Model: gpt-4o-mini
 Scenario: FSP Fall 1 (D2P + D2D)
 
 --- SYSTEM PROMPT ---
-Du bist ein neutraler, strenger und evidenzbasierter FSP-Pruefer fuer das Arzt-Arzt-Gespraech (AAG, Teil 3). Aktiver Fall: Herr Drescher - NSTEMI. Relevante Fallbegriffe: NSTEMI, Troponin T, ST-Senkung, Koronarangiografie, PCI. Rohdaten Begriffe-JSON: [
+Du bist ein erfahrener FSP-Pruefer fuer das Arzt-Patient-Gespraech (APG). Aktuelles Thema: NSTEMI. Themenrahmen: fsp_fall_1. Relevante Begriffe: NSTEMI, Troponin T, ST-Senkung, Koronarangiografie, PCI. Rohdaten aus dem Tabellenfeld terms (JSON): [
   "NSTEMI",
   "Troponin T",
   "ST-Senkung",
   "Koronarangiografie",
   "PCI"
-]. Bewerte ausschliesslich anhand der gelieferten Belege.
+]. Du bewertest systematisch, objektiv und konstruktiv ausschliesslich sprachliche und kommunikative Kompetenzen auf C1-Niveau. Nutze die ACTIVE CASE REFERENCE im Eingabetext als verbindlichen Fallkontext fuer Vollstaendigkeit und Relevanz.
 
-D2D-BEWERTUNGSREGELN
-- Nutze ACTIVE CASE REFERENCE als verbindliche Grundlage fuer Vollstaendigkeit, Terminologie und klinische Relevanz.
-- Nutze FULL CONVERSATION TRANSKRIPT, PRONUNCIATION_TRACKING_NOTES_PER_TURN und REALTIME AI FEEDBACK als Evidenzquellen. Ohne Beleg keine Punkte.
-- Im Arzt-Arzt-Gespraech ist Fachsprache Pflicht. Laiensprache gegenueber aerztlichen Kollegen ist negativ zu bewerten.
+D2P-BEWERTUNGSREGELN
 - Bewerte nach genau 5 Hauptkriterien mit je max. 3.99 Punkten: content, conversation, vocabulary, grammar, pronunciation.
 - Gesamtwertung: totalScore = Summe der 5 Hauptkriterien, max. 20 Punkte. Passing threshold = 12 Punkte. finalVerdict = PASSED bei totalScore >= 12, sonst FAILED.
-- Jeden [Mistake]-Eintrag mit severity=critical aus PRONUNCIATION_TRACKING_NOTES_PER_TURN explizit in areasForImprovement oder criticalErrors nennen. Wenn der Fehler inhaltlich oder sicherheitsrelevant ist, muss er die Bewertung sichtbar verschlechtern.
-- Die Begriffe-Phase fliesst in vocabulary ein. 5 korrekt = sehr stark, 4 korrekt = gut, 3 oder weniger = schwach.
-- Wenn Aussprache nur aus Text beurteilbar ist, bewerte pronunciation vorsichtig ueber sprachliche Klarheit, Fluessigkeit und Lesbarkeit des Transkripts, nicht ueber echte Audio-Phonetik.
-- Antworte NUR mit einem gueltigen JSON-Objekt ohne Markdown oder Zusatztext.
+- Im APG ist patientengerechte Laiensprache Pflicht. Medizinische Fachbegriffe ohne Erklaerung gelten als Abzug in vocabulary.
+- Verwende nur explizite Transkriptbelege; ohne Beleg keine Punkte.
+- Vollstaendigkeit darf nur gegen die aktive Fallreferenz geprueft werden. Bestrafe keine Informationen, die in diesem aktiven Fall gar nicht vorgesehen sind.
+- Wenn das Gespraech ueberwiegend zufaellig, themenfremd, unsinnig oder kaum verwertbar ist, muessen die Einzelwerte sehr niedrig ausfallen und das Gesamtfeedback das klar benennen.
+- Jeden [Mistake]-Eintrag mit severity=critical aus PRONUNCIATION_TRACKING_NOTES_PER_TURN explizit in areasForImprovement oder criticalErrors nennen.
+- Hohe Punkte fuer hoeflichen Ton allein sind verboten.
+- Antworte nur mit einem gueltigen JSON-Objekt ohne Markdown oder Zusatztext.
 
 --- USER PROMPT ---
-Bewerte das folgende Arzt-Arzt-Uebergabegespraech fuer die FSP nach dem CEO-Raster (5 Hauptkriterien, Gesamt 20 Punkte).
+Bewerte das folgende Arzt-Patient-Gespraech fuer die FSP nach dem CEO-Raster (5 Hauptkriterien, Gesamt 20 Punkte).
 
-Fall: Herr Drescher - NSTEMI
-Fallbegriffe: NSTEMI, Troponin T, ST-Senkung, Koronarangiografie, PCI
+Thema: NSTEMI
+Themenbegriffe: NSTEMI, Troponin T, ST-Senkung, Koronarangiografie, PCI
 Begriffe-JSON: [
   "NSTEMI",
   "Troponin T",
@@ -37,28 +37,21 @@ Begriffe-JSON: [
   "PCI"
 ]
 
-STRUKTUR DES BEWERTUNGS-PAYLOADS:
-Der unten stehende Block enthaelt diese Abschnitte in Reihenfolge:
-1. ACTIVE CASE REFERENCE — Fallmetadaten: Patientenidentifikation, Falltitel, Fallbegriffe, Kernfakten, erwartete Diskussionspunkte. Verbindliche Grundlage fuer Vollstaendigkeitspruefung.
-2. FULL CONVERSATION TRANSKRIPT (verbatim) — vollstaendiges D2D-Gespraech ueber alle Phasen (Begruessigung, Vorstellung, Diskussion, Begriffe). Zeilenprefix: "User:" = Kandidat, "AI:" = Prof. Dr. Hofmann.
-3. PRONUNCIATION_TRACKING_NOTES_PER_TURN — automatisch erfasste Sprach- und Fehlernotizen pro Kandidatenzug, darunter "[Mistake] severity: Beschreibung" aus dem log_mistake-Tool der Realtime-KI. Jeden Eintrag severity=critical explizit pruefen und bei Relevanz in areasForImprovement oder criticalErrors nennen. GrammarIssues und WordChoiceIssues muessen in grammar und vocabulary einfliessen.
-4. REALTIME AI FEEDBACK — optionaler Freitext-Kommentar der Realtime-KI vom Ende der Sitzung.
-
 BEWERTUNGSDIMENSIONEN:
-- content (0-3.99): Vollstaendigkeit und Korrektheit der Fallvorstellung gemessen an ACTIVE CASE REFERENCE. Achte auf Patientendaten, Hauptsymptome, Vorerkrankungen, Risikofaktoren, Befunde, Diagnostik, Verdachtsdiagnose, Differenzialdiagnosen, Medikation und Procedere.
-- conversation (0-3.99): Interaktion, Eigeninitiative, Struktur, kompetente Antworten auf Rueckfragen, korrekter Umgang mit Fachabkuerzungen und insgesamt flussige klinische Gespraechsfuehrung.
-- vocabulary (0-3.99): Praeziser medizinischer Wortschatz, richtige technische Begriffe, professionelle Ausdrucksweise. Die 5-Begriffe-Phase fliesst hier ein.
-- grammar (0-3.99): Syntax, Artikel, Praepositionen, Kasus, Tempora, Verbformen und Satzbau. Nenne Fehler, die das Verstaendnis oder die klinische Sicherheit beeintraechtigen koennen.
-- pronunciation (0-3.99): Vorsichtige textbasierte Einschaetzung von Verstaendlichkeit, Fluessigkeit, sprachlicher Klarheit und Intonationsnaehe. Keine erfundene Audioanalyse.
+- content (0-3.99): Vollstaendigkeit der Anamnese gemaess ACTIVE CASE REFERENCE. Persoenliche Daten, Leitsymptom, Begleitsymptome, vegetative Anamnese, Vorerkrankungen, Medikamente, Noxen, Allergien, Familienanamnese, Sozialanamnese, Zusammenfassung und Procedere.
+- conversation (0-3.99): Gespraechsfaehigkeit und Interaktion. Initiative, Vorstellung, spontaner Sprachfluss, patientengerechte Rueckfragen, empathische Reaktion, Verstaendnissicherung, Umgang mit Abschweifungen.
+- vocabulary (0-3.99): Ausdrucksfaehigkeit und Wortschatz. Konsequente Laiensprache, keine unerklaerten Fachbegriffe, alltagssprachliche Formulierungen. Fachbegriffe ohne Erklaerung = Abzug.
+- grammar (0-3.99): Korrekte Syntax und Morphologie. Artikel, Praepositionen, Kasus, Zeitformen, Konnektoren, Satzbau, Selbstkorrektur.
+- pronunciation (0-3.99): Vorsichtige textbasierte Einschaetzung von Verstaendlichkeit, Fluessigkeit und sprachlicher Klarheit. Keine erfundene Audioanalyse.
 - totalScore (0-20): Summe aller 5 Hauptkriterien.
 - finalVerdict: PASSED bei totalScore >= 12, sonst FAILED.
 
-STRIKTE BEWEISREGEL: Nur was klar im Payload belegt ist, fliesst in die Bewertung ein. Keine Annahmen, kein Aufrunden ohne Beleg. Hohe Punkte ohne Transkriptnachweis sind verboten.
+STRIKTE BEWEISREGEL: Nur was klar im Payload belegt ist, fliesst in die Bewertung ein. Keine Annahmen, kein Aufrunden ohne Beleg.
 
 BEWERTUNGS-PAYLOAD:
 ACTIVE CASE REFERENCE:
 - Scenario: FSP Fall 1 (D2P + D2D)
-- Role: d2d
+- Role: d2p
 - Case id: d2d_case_1
 - Case title: Herr Drescher - NSTEMI
 - Case terminology: NSTEMI, Troponin T, ST-Senkung, Koronarangiografie, PCI
@@ -73,62 +66,127 @@ EVALUATION RULES (MUST FOLLOW):
 4) If user performance is weak or nonsensical, scores must be low accordingly.
 
 USER_ONLY_TRANSCRIPT_FOR_SCORING:
-UserTurn 1: Hallo, wie geht's dir?
-UserTurn 2: Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?
-UserTurn 3: Ich nehme ihre strukturierte Pfeilvorstellung entgegen.
-UserTurn 4: sichere
-UserTurn 5: Hallo, wie geht's dir?
-UserTurn 6: Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?
-UserTurn 7: Ich nehme ihre strukturierte Pfeilvorstellung entgegen.
-UserTurn 8: sichere
-UserTurn 9: Hallo, wie geht's dir?
-UserTurn 10: Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?
-UserTurn 11: Ich nehme ihre strukturierte Pfeilvorstellung entgegen.
+UserTurn 1: Hallo, kannst du mich hören?
+UserTurn 2: Can you hear me?
+UserTurn 3: Guten Tag. Ich bin Herr Drescher.
+UserTurn 4: Was machst du hier?
+UserTurn 5: Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?
+UserTurn 6: Ich heiße Holger Drescher.
+UserTurn 7: Ich bin 66 Jahre alt. Und was hast du heute gemacht?
+UserTurn 8: Ich habe ganz normal gefrühstückt.
+UserTurn 9: Hallo, kannst du mich hören?
+UserTurn 10: Can you hear me?
+UserTurn 11: Guten Tag. Ich bin Herr Drescher.
+UserTurn 12: Was machst du hier?
+UserTurn 13: Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?
+UserTurn 14: Ich heiße Holger Drescher.
+UserTurn 15: Ich bin 66 Jahre alt. Und was hast du heute gemacht?
+UserTurn 16: Ich habe ganz normal gefrühstückt.
+UserTurn 17: Hallo, kannst du mich hören?
+UserTurn 18: Can you hear me?
+UserTurn 19: Guten Tag. Ich bin Herr Drescher.
+UserTurn 20: Was machst du hier?
+UserTurn 21: Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?
+UserTurn 22: Ich heiße Holger Drescher.
+UserTurn 23: Ich bin 66 Jahre alt. Und was hast du heute gemacht?
+UserTurn 24: Ich habe ganz normal gefrühstückt.
 
 TURN_CONTEXT (AI shown for context only, DO NOT SCORE AI):
 Turn 1:
-AI (context only): [none]
-User (score this): Hallo, wie geht's dir?
+AI (context only): Guten Tag,
+User (score this): Hallo, kannst du mich hören?
 
 Turn 2:
-AI (context only): Guten Morgen. Ich bin bereit, bitte beginnen Sie mit Ihrer Vorstellung.
-User (score this): Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?
+AI (context only): Guten Tag, ich bin Herr Drescher.
+User (score this): Can you hear me?
 
 Turn 3:
-AI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.
-User (score this): Ich nehme ihre strukturierte Pfeilvorstellung entgegen.
+AI (context only): Guten Tag, ich bin Herr Drescher.
+User (score this): Guten Tag. Ich bin Herr Drescher.
 
 Turn 4:
-AI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.
-User (score this): sichere
+AI (context only): Guten Tag, ich bin Herr Drescher.
+User (score this): Was machst du hier?
 
 Turn 5:
-AI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.
-User (score this): Hallo, wie geht's dir?
+AI (context only): Ich heiße Holger Drescher und ich bin 66 Jahre
+User (score this): Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?
 
 Turn 6:
-AI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.
-User (score this): Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?
+AI (context only): Ich bin 66 Jahre alt.
+User (score this): Ich heiße Holger Drescher.
 
 Turn 7:
-AI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.
-User (score this): Ich nehme ihre strukturierte Pfeilvorstellung entgegen.
+AI (context only): Ich bin 66 Jahre alt.
+User (score this): Ich bin 66 Jahre alt. Und was hast du heute gemacht?
 
 Turn 8:
-AI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.
-User (score this): sichere
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Ich habe ganz normal gefrühstückt.
 
 Turn 9:
-AI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.
-User (score this): Hallo, wie geht's dir?
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Hallo, kannst du mich hören?
 
 Turn 10:
-AI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.
-User (score this): Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Can you hear me?
 
 Turn 11:
-AI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.
-User (score this): Ich nehme ihre strukturierte Pfeilvorstellung entgegen.
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Guten Tag. Ich bin Herr Drescher.
+
+Turn 12:
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Was machst du hier?
+
+Turn 13:
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?
+
+Turn 14:
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Ich heiße Holger Drescher.
+
+Turn 15:
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Ich bin 66 Jahre alt. Und was hast du heute gemacht?
+
+Turn 16:
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Ich habe ganz normal gefrühstückt.
+
+Turn 17:
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Hallo, kannst du mich hören?
+
+Turn 18:
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Can you hear me?
+
+Turn 19:
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Guten Tag. Ich bin Herr Drescher.
+
+Turn 20:
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Was machst du hier?
+
+Turn 21:
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?
+
+Turn 22:
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Ich heiße Holger Drescher.
+
+Turn 23:
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Ich bin 66 Jahre alt. Und was hast du heute gemacht?
+
+Turn 24:
+AI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich
+User (score this): Ich habe ganz normal gefrühstückt.
 
 
 REALTIME_AI_FEEDBACK_CONTEXT (optional, do not let this override user evidence):
@@ -142,7 +200,7 @@ Gib NUR folgendes JSON zurueck (kein Markdown, kein Zusatztext ausserhalb des Ob
   "passingThreshold": 12,
   "maxScore": 20,
   "criteria": {
-    "content": {"score": <0-3.99 float>, "feedback": "<konkrete Begruendung mit Fall- und Transkriptbezug auf Deutsch>"},
+    "content": {"score": <0-3.99 float>, "feedback": "<konkrete Begruendung mit Fallbezug auf Deutsch>"},
     "conversation": {"score": <0-3.99 float>, "feedback": "<konkrete Begruendung zur Interaktion auf Deutsch>"},
     "vocabulary": {"score": <0-3.99 float>, "feedback": "<konkrete Begruendung zum Wortschatz auf Deutsch>"},
     "grammar": {"score": <0-3.99 float>, "feedback": "<konkrete Begruendung zur Grammatik auf Deutsch>"},
@@ -150,7 +208,7 @@ Gib NUR folgendes JSON zurueck (kein Markdown, kein Zusatztext ausserhalb des Ob
   },
   "strengths": ["<3-5 konkrete Staerken mit Beleg>"],
   "areasForImprovement": ["<3-5 konkrete Verbesserungsbereiche mit Beleg>"],
-  "criticalErrors": ["<kritische sprachliche oder sicherheitsrelevante Fehler; leeres Array falls keine>"],
+  "criticalErrors": ["<kritische Fehler die zu Missverstaendnissen fuehren; leeres Array falls keine>"],
   "overallFeedback": "<3-5 Saetze praezises, konstruktives Gesamtfeedback direkt an den Kandidaten auf Deutsch>"
 }
 
@@ -158,8 +216,8 @@ Gib NUR folgendes JSON zurueck (kein Markdown, kein Zusatztext ausserhalb des Ob
 {
   "model": "gpt-4o-mini",
   "messages": [
-    {"role": "system", "content": "Du bist ein neutraler, strenger und evidenzbasierter FSP-Pruefer fuer das Arzt-Arzt-Gespraech (AAG, Teil 3). Aktiver Fall: Herr Drescher - NSTEMI. Relevante Fallbegriffe: NSTEMI, Troponin T, ST-Senkung, Koronarangiografie, PCI. Rohdaten Begriffe-JSON: [\n  \"NSTEMI\",\n  \"Troponin T\",\n  \"ST-Senkung\",\n  \"Koronarangiografie\",\n  \"PCI\"\n]. Bewerte ausschliesslich anhand der gelieferten Belege.\n\nD2D-BEWERTUNGSREGELN\n- Nutze ACTIVE CASE REFERENCE als verbindliche Grundlage fuer Vollstaendigkeit, Terminologie und klinische Relevanz.\n- Nutze FULL CONVERSATION TRANSKRIPT, PRONUNCIATION_TRACKING_NOTES_PER_TURN und REALTIME AI FEEDBACK als Evidenzquellen. Ohne Beleg keine Punkte.\n- Im Arzt-Arzt-Gespraech ist Fachsprache Pflicht. Laiensprache gegenueber aerztlichen Kollegen ist negativ zu bewerten.\n- Bewerte nach genau 5 Hauptkriterien mit je max. 3.99 Punkten: content, conversation, vocabulary, grammar, pronunciation.\n- Gesamtwertung: totalScore = Summe der 5 Hauptkriterien, max. 20 Punkte. Passing threshold = 12 Punkte. finalVerdict = PASSED bei totalScore >= 12, sonst FAILED.\n- Jeden [Mistake]-Eintrag mit severity=critical aus PRONUNCIATION_TRACKING_NOTES_PER_TURN explizit in areasForImprovement oder criticalErrors nennen. Wenn der Fehler inhaltlich oder sicherheitsrelevant ist, muss er die Bewertung sichtbar verschlechtern.\n- Die Begriffe-Phase fliesst in vocabulary ein. 5 korrekt = sehr stark, 4 korrekt = gut, 3 oder weniger = schwach.\n- Wenn Aussprache nur aus Text beurteilbar ist, bewerte pronunciation vorsichtig ueber sprachliche Klarheit, Fluessigkeit und Lesbarkeit des Transkripts, nicht ueber echte Audio-Phonetik.\n- Antworte NUR mit einem gueltigen JSON-Objekt ohne Markdown oder Zusatztext."},
-    {"role": "user", "content": "Bewerte das folgende Arzt-Arzt-Uebergabegespraech fuer die FSP nach dem CEO-Raster (5 Hauptkriterien, Gesamt 20 Punkte).\n\nFall: Herr Drescher - NSTEMI\nFallbegriffe: NSTEMI, Troponin T, ST-Senkung, Koronarangiografie, PCI\nBegriffe-JSON: [\n  \"NSTEMI\",\n  \"Troponin T\",\n  \"ST-Senkung\",\n  \"Koronarangiografie\",\n  \"PCI\"\n]\n\nSTRUKTUR DES BEWERTUNGS-PAYLOADS:\nDer unten stehende Block enthaelt diese Abschnitte in Reihenfolge:\n1. ACTIVE CASE REFERENCE — Fallmetadaten: Patientenidentifikation, Falltitel, Fallbegriffe, Kernfakten, erwartete Diskussionspunkte. Verbindliche Grundlage fuer Vollstaendigkeitspruefung.\n2. FULL CONVERSATION TRANSKRIPT (verbatim) — vollstaendiges D2D-Gespraech ueber alle Phasen (Begruessigung, Vorstellung, Diskussion, Begriffe). Zeilenprefix: \"User:\" = Kandidat, \"AI:\" = Prof. Dr. Hofmann.\n3. PRONUNCIATION_TRACKING_NOTES_PER_TURN — automatisch erfasste Sprach- und Fehlernotizen pro Kandidatenzug, darunter \"[Mistake] severity: Beschreibung\" aus dem log_mistake-Tool der Realtime-KI. Jeden Eintrag severity=critical explizit pruefen und bei Relevanz in areasForImprovement oder criticalErrors nennen. GrammarIssues und WordChoiceIssues muessen in grammar und vocabulary einfliessen.\n4. REALTIME AI FEEDBACK — optionaler Freitext-Kommentar der Realtime-KI vom Ende der Sitzung.\n\nBEWERTUNGSDIMENSIONEN:\n- content (0-3.99): Vollstaendigkeit und Korrektheit der Fallvorstellung gemessen an ACTIVE CASE REFERENCE. Achte auf Patientendaten, Hauptsymptome, Vorerkrankungen, Risikofaktoren, Befunde, Diagnostik, Verdachtsdiagnose, Differenzialdiagnosen, Medikation und Procedere.\n- conversation (0-3.99): Interaktion, Eigeninitiative, Struktur, kompetente Antworten auf Rueckfragen, korrekter Umgang mit Fachabkuerzungen und insgesamt flussige klinische Gespraechsfuehrung.\n- vocabulary (0-3.99): Praeziser medizinischer Wortschatz, richtige technische Begriffe, professionelle Ausdrucksweise. Die 5-Begriffe-Phase fliesst hier ein.\n- grammar (0-3.99): Syntax, Artikel, Praepositionen, Kasus, Tempora, Verbformen und Satzbau. Nenne Fehler, die das Verstaendnis oder die klinische Sicherheit beeintraechtigen koennen.\n- pronunciation (0-3.99): Vorsichtige textbasierte Einschaetzung von Verstaendlichkeit, Fluessigkeit, sprachlicher Klarheit und Intonationsnaehe. Keine erfundene Audioanalyse.\n- totalScore (0-20): Summe aller 5 Hauptkriterien.\n- finalVerdict: PASSED bei totalScore >= 12, sonst FAILED.\n\nSTRIKTE BEWEISREGEL: Nur was klar im Payload belegt ist, fliesst in die Bewertung ein. Keine Annahmen, kein Aufrunden ohne Beleg. Hohe Punkte ohne Transkriptnachweis sind verboten.\n\nBEWERTUNGS-PAYLOAD:\nACTIVE CASE REFERENCE:\n- Scenario: FSP Fall 1 (D2P + D2D)\n- Role: d2d\n- Case id: d2d_case_1\n- Case title: Herr Drescher - NSTEMI\n- Case terminology: NSTEMI, Troponin T, ST-Senkung, Koronarangiografie, PCI\n- Full case context: 66-jaehriger Patient mit retrosternalem Engegefuehl und Ausstrahlung in die linke Schulter, Troponin-erhoeht und ST-Senkungen V1/V2. Typische ACS-Symptomatik mit Uebelkeit und Angst, aktuell asymptomatisch.\n- Core facts for completeness: Patient: Holger Drescher, 66-jaehrig, verheiratet, Begleiter Sohn, Symptomatik: retrosternales Engegefuehl mit Ausstrahlung in linke Schulter, Uebelkeit, Angst; Beginn heute morgen nach Fruehstueck, Vitale Zeichen ED: RR 90/60 mmHg (hypotensiv), HF 140/min (tachykard), AF 17/min, SpO2 95% RA, Temp 36.5 C, Vitale Zeichen aktuell: RR 125/85 mmHg, HF 94/min, asymptomatisch, Vorerkrankungen: Diabetes Typ 2 (seit 2009), COPD GOLD II (seit 2014), Risikofaktoren: aktiver Raucher 28 Jahre, 1 Packung/Tag (28 Packungsjahre), Diabetes, positive Familienanamnese (Vater MI mit 59 Jahren), Medikation vor Aufnahme: Metformin 1000 mg 1-0-1, Salbutamol 200 mcg inhaliert PRN, Medikation stationaer: Metformin pausiert vor geplanter Koronarangiografie, Allergien: keine bekannt, Klinische Untersuchung: unauffaellig Lunge/Abdomen/Extremitaeten/neuro; pathologisch: Holosystolikum, Punctum maximum 5. ICS Medioklavikular links, Ausstrahlung nach links Axilla, Laborwerte unauffaellig: CK, LDH, Leberpanel, Glucose, Elektrolyte, Laborwerte erhoeht: Troponin T erhoeht (Myokardschaedigung), HbA1c 6.9 % (suboptimale Diabeteseinstellung), ECG: HF 100/min, Sinusrhythmus, Linksachsenabweichung, ST-Senkung V1-V2, V7-V9 unauffaellig, R/S-Quotient > 1, Verdachtsdiagnose: NSTEMI - Begruendung: erhoeht Troponin + ST-Senkung V1/V2 + typische Symptomatik + Risikofaktoren, Differenzialdiagnosen: Instabile Angina (ohne Troponin), posteriorer STEMI (V7-V9 unauffaellig), Aortendissektion (fehlende Zeichen), Lungenembolie, hypertensive Entgleisung (RR war hypotensiv), Geplantes Procedere: frueh-elektive Koronarangiografie innerhalb 72 h, ggf. PCI mit Stentimplantation, Echo zur Klaerung des Holosystolikums, Blutzuckertagesprofil, Diabetesoptimierung\n- Relevant question focus: Wie begruenden Sie die Diagnose NSTEMI auf Basis der verfuegbaren Befunde?, Welche Differenzialdiagnosen grenzen Sie ab und wie?, Warum ist die frueh-elektive statt sofortige Dringlichkeit hier angemessen?, Welche Laborwerte und deren Verlauf sind entscheidend?, Wie interpretieren Sie das ECG und die R/S-Quotient?, Welche Differenzialdiagnose zu Ihrem Troponin-Befund beachten Sie?, Wie erklaeren Sie die Hypotonie/Tachykardie bei ED-Aufnahme?, Welche Rolle hat der Holosystolikum in dieser Praesentation?, Welche leitliniengerechte antithrombozytaere und antikoagulative Strategie planen Sie?, Wie adressieren Sie die Diabetes- und COPD-Komorbiditaten im Kontext dieser ACS-Episode?\n\nEVALUATION RULES (MUST FOLLOW):\n1) Score ONLY what the USER said.\n2) AI lines are CONTEXT ONLY and must not increase the score.\n3) Do not reward AI quality, prompt quality, or case instructions.\n4) If user performance is weak or nonsensical, scores must be low accordingly.\n\nUSER_ONLY_TRANSCRIPT_FOR_SCORING:\nUserTurn 1: Hallo, wie geht's dir?\nUserTurn 2: Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?\nUserTurn 3: Ich nehme ihre strukturierte Pfeilvorstellung entgegen.\nUserTurn 4: sichere\nUserTurn 5: Hallo, wie geht's dir?\nUserTurn 6: Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?\nUserTurn 7: Ich nehme ihre strukturierte Pfeilvorstellung entgegen.\nUserTurn 8: sichere\nUserTurn 9: Hallo, wie geht's dir?\nUserTurn 10: Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?\nUserTurn 11: Ich nehme ihre strukturierte Pfeilvorstellung entgegen.\n\nTURN_CONTEXT (AI shown for context only, DO NOT SCORE AI):\nTurn 1:\nAI (context only): [none]\nUser (score this): Hallo, wie geht's dir?\n\nTurn 2:\nAI (context only): Guten Morgen. Ich bin bereit, bitte beginnen Sie mit Ihrer Vorstellung.\nUser (score this): Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?\n\nTurn 3:\nAI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.\nUser (score this): Ich nehme ihre strukturierte Pfeilvorstellung entgegen.\n\nTurn 4:\nAI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.\nUser (score this): sichere\n\nTurn 5:\nAI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.\nUser (score this): Hallo, wie geht's dir?\n\nTurn 6:\nAI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.\nUser (score this): Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?\n\nTurn 7:\nAI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.\nUser (score this): Ich nehme ihre strukturierte Pfeilvorstellung entgegen.\n\nTurn 8:\nAI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.\nUser (score this): sichere\n\nTurn 9:\nAI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.\nUser (score this): Hallo, wie geht's dir?\n\nTurn 10:\nAI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.\nUser (score this): Guten Morgen, ich bin bereit. Bitte beginnen Sie mit Ihrer Vor- was machst du hier?\n\nTurn 11:\nAI (context only): In Ordnung. Bitte fahren Sie mit Ihrer Fallvorstellung fort.\nUser (score this): Ich nehme ihre strukturierte Pfeilvorstellung entgegen.\n\n\nREALTIME_AI_FEEDBACK_CONTEXT (optional, do not let this override user evidence):\n[none]\n\n\nGib NUR folgendes JSON zurueck (kein Markdown, kein Zusatztext ausserhalb des Objekts):\n{\n  \"finalVerdict\": \"<PASSED oder FAILED>\",\n  \"totalScore\": <0-20 float>,\n  \"passingThreshold\": 12,\n  \"maxScore\": 20,\n  \"criteria\": {\n    \"content\": {\"score\": <0-3.99 float>, \"feedback\": \"<konkrete Begruendung mit Fall- und Transkriptbezug auf Deutsch>\"},\n    \"conversation\": {\"score\": <0-3.99 float>, \"feedback\": \"<konkrete Begruendung zur Interaktion auf Deutsch>\"},\n    \"vocabulary\": {\"score\": <0-3.99 float>, \"feedback\": \"<konkrete Begruendung zum Wortschatz auf Deutsch>\"},\n    \"grammar\": {\"score\": <0-3.99 float>, \"feedback\": \"<konkrete Begruendung zur Grammatik auf Deutsch>\"},\n    \"pronunciation\": {\"score\": <0-3.99 float>, \"feedback\": \"<vorsichtige textbasierte Begruendung auf Deutsch>\"}\n  },\n  \"strengths\": [\"<3-5 konkrete Staerken mit Beleg>\"],\n  \"areasForImprovement\": [\"<3-5 konkrete Verbesserungsbereiche mit Beleg>\"],\n  \"criticalErrors\": [\"<kritische sprachliche oder sicherheitsrelevante Fehler; leeres Array falls keine>\"],\n  \"overallFeedback\": \"<3-5 Saetze praezises, konstruktives Gesamtfeedback direkt an den Kandidaten auf Deutsch>\"\n}"}
+    {"role": "system", "content": "Du bist ein erfahrener FSP-Pruefer fuer das Arzt-Patient-Gespraech (APG). Aktuelles Thema: NSTEMI. Themenrahmen: fsp_fall_1. Relevante Begriffe: NSTEMI, Troponin T, ST-Senkung, Koronarangiografie, PCI. Rohdaten aus dem Tabellenfeld terms (JSON): [\n  \"NSTEMI\",\n  \"Troponin T\",\n  \"ST-Senkung\",\n  \"Koronarangiografie\",\n  \"PCI\"\n]. Du bewertest systematisch, objektiv und konstruktiv ausschliesslich sprachliche und kommunikative Kompetenzen auf C1-Niveau. Nutze die ACTIVE CASE REFERENCE im Eingabetext als verbindlichen Fallkontext fuer Vollstaendigkeit und Relevanz.\n\nD2P-BEWERTUNGSREGELN\n- Bewerte nach genau 5 Hauptkriterien mit je max. 3.99 Punkten: content, conversation, vocabulary, grammar, pronunciation.\n- Gesamtwertung: totalScore = Summe der 5 Hauptkriterien, max. 20 Punkte. Passing threshold = 12 Punkte. finalVerdict = PASSED bei totalScore >= 12, sonst FAILED.\n- Im APG ist patientengerechte Laiensprache Pflicht. Medizinische Fachbegriffe ohne Erklaerung gelten als Abzug in vocabulary.\n- Verwende nur explizite Transkriptbelege; ohne Beleg keine Punkte.\n- Vollstaendigkeit darf nur gegen die aktive Fallreferenz geprueft werden. Bestrafe keine Informationen, die in diesem aktiven Fall gar nicht vorgesehen sind.\n- Wenn das Gespraech ueberwiegend zufaellig, themenfremd, unsinnig oder kaum verwertbar ist, muessen die Einzelwerte sehr niedrig ausfallen und das Gesamtfeedback das klar benennen.\n- Jeden [Mistake]-Eintrag mit severity=critical aus PRONUNCIATION_TRACKING_NOTES_PER_TURN explizit in areasForImprovement oder criticalErrors nennen.\n- Hohe Punkte fuer hoeflichen Ton allein sind verboten.\n- Antworte nur mit einem gueltigen JSON-Objekt ohne Markdown oder Zusatztext."},
+    {"role": "user", "content": "Bewerte das folgende Arzt-Patient-Gespraech fuer die FSP nach dem CEO-Raster (5 Hauptkriterien, Gesamt 20 Punkte).\n\nThema: NSTEMI\nThemenbegriffe: NSTEMI, Troponin T, ST-Senkung, Koronarangiografie, PCI\nBegriffe-JSON: [\n  \"NSTEMI\",\n  \"Troponin T\",\n  \"ST-Senkung\",\n  \"Koronarangiografie\",\n  \"PCI\"\n]\n\nBEWERTUNGSDIMENSIONEN:\n- content (0-3.99): Vollstaendigkeit der Anamnese gemaess ACTIVE CASE REFERENCE. Persoenliche Daten, Leitsymptom, Begleitsymptome, vegetative Anamnese, Vorerkrankungen, Medikamente, Noxen, Allergien, Familienanamnese, Sozialanamnese, Zusammenfassung und Procedere.\n- conversation (0-3.99): Gespraechsfaehigkeit und Interaktion. Initiative, Vorstellung, spontaner Sprachfluss, patientengerechte Rueckfragen, empathische Reaktion, Verstaendnissicherung, Umgang mit Abschweifungen.\n- vocabulary (0-3.99): Ausdrucksfaehigkeit und Wortschatz. Konsequente Laiensprache, keine unerklaerten Fachbegriffe, alltagssprachliche Formulierungen. Fachbegriffe ohne Erklaerung = Abzug.\n- grammar (0-3.99): Korrekte Syntax und Morphologie. Artikel, Praepositionen, Kasus, Zeitformen, Konnektoren, Satzbau, Selbstkorrektur.\n- pronunciation (0-3.99): Vorsichtige textbasierte Einschaetzung von Verstaendlichkeit, Fluessigkeit und sprachlicher Klarheit. Keine erfundene Audioanalyse.\n- totalScore (0-20): Summe aller 5 Hauptkriterien.\n- finalVerdict: PASSED bei totalScore >= 12, sonst FAILED.\n\nSTRIKTE BEWEISREGEL: Nur was klar im Payload belegt ist, fliesst in die Bewertung ein. Keine Annahmen, kein Aufrunden ohne Beleg.\n\nBEWERTUNGS-PAYLOAD:\nACTIVE CASE REFERENCE:\n- Scenario: FSP Fall 1 (D2P + D2D)\n- Role: d2p\n- Case id: d2d_case_1\n- Case title: Herr Drescher - NSTEMI\n- Case terminology: NSTEMI, Troponin T, ST-Senkung, Koronarangiografie, PCI\n- Full case context: 66-jaehriger Patient mit retrosternalem Engegefuehl und Ausstrahlung in die linke Schulter, Troponin-erhoeht und ST-Senkungen V1/V2. Typische ACS-Symptomatik mit Uebelkeit und Angst, aktuell asymptomatisch.\n- Core facts for completeness: Patient: Holger Drescher, 66-jaehrig, verheiratet, Begleiter Sohn, Symptomatik: retrosternales Engegefuehl mit Ausstrahlung in linke Schulter, Uebelkeit, Angst; Beginn heute morgen nach Fruehstueck, Vitale Zeichen ED: RR 90/60 mmHg (hypotensiv), HF 140/min (tachykard), AF 17/min, SpO2 95% RA, Temp 36.5 C, Vitale Zeichen aktuell: RR 125/85 mmHg, HF 94/min, asymptomatisch, Vorerkrankungen: Diabetes Typ 2 (seit 2009), COPD GOLD II (seit 2014), Risikofaktoren: aktiver Raucher 28 Jahre, 1 Packung/Tag (28 Packungsjahre), Diabetes, positive Familienanamnese (Vater MI mit 59 Jahren), Medikation vor Aufnahme: Metformin 1000 mg 1-0-1, Salbutamol 200 mcg inhaliert PRN, Medikation stationaer: Metformin pausiert vor geplanter Koronarangiografie, Allergien: keine bekannt, Klinische Untersuchung: unauffaellig Lunge/Abdomen/Extremitaeten/neuro; pathologisch: Holosystolikum, Punctum maximum 5. ICS Medioklavikular links, Ausstrahlung nach links Axilla, Laborwerte unauffaellig: CK, LDH, Leberpanel, Glucose, Elektrolyte, Laborwerte erhoeht: Troponin T erhoeht (Myokardschaedigung), HbA1c 6.9 % (suboptimale Diabeteseinstellung), ECG: HF 100/min, Sinusrhythmus, Linksachsenabweichung, ST-Senkung V1-V2, V7-V9 unauffaellig, R/S-Quotient > 1, Verdachtsdiagnose: NSTEMI - Begruendung: erhoeht Troponin + ST-Senkung V1/V2 + typische Symptomatik + Risikofaktoren, Differenzialdiagnosen: Instabile Angina (ohne Troponin), posteriorer STEMI (V7-V9 unauffaellig), Aortendissektion (fehlende Zeichen), Lungenembolie, hypertensive Entgleisung (RR war hypotensiv), Geplantes Procedere: frueh-elektive Koronarangiografie innerhalb 72 h, ggf. PCI mit Stentimplantation, Echo zur Klaerung des Holosystolikums, Blutzuckertagesprofil, Diabetesoptimierung\n- Relevant question focus: Wie begruenden Sie die Diagnose NSTEMI auf Basis der verfuegbaren Befunde?, Welche Differenzialdiagnosen grenzen Sie ab und wie?, Warum ist die frueh-elektive statt sofortige Dringlichkeit hier angemessen?, Welche Laborwerte und deren Verlauf sind entscheidend?, Wie interpretieren Sie das ECG und die R/S-Quotient?, Welche Differenzialdiagnose zu Ihrem Troponin-Befund beachten Sie?, Wie erklaeren Sie die Hypotonie/Tachykardie bei ED-Aufnahme?, Welche Rolle hat der Holosystolikum in dieser Praesentation?, Welche leitliniengerechte antithrombozytaere und antikoagulative Strategie planen Sie?, Wie adressieren Sie die Diabetes- und COPD-Komorbiditaten im Kontext dieser ACS-Episode?\n\nEVALUATION RULES (MUST FOLLOW):\n1) Score ONLY what the USER said.\n2) AI lines are CONTEXT ONLY and must not increase the score.\n3) Do not reward AI quality, prompt quality, or case instructions.\n4) If user performance is weak or nonsensical, scores must be low accordingly.\n\nUSER_ONLY_TRANSCRIPT_FOR_SCORING:\nUserTurn 1: Hallo, kannst du mich hören?\nUserTurn 2: Can you hear me?\nUserTurn 3: Guten Tag. Ich bin Herr Drescher.\nUserTurn 4: Was machst du hier?\nUserTurn 5: Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?\nUserTurn 6: Ich heiße Holger Drescher.\nUserTurn 7: Ich bin 66 Jahre alt. Und was hast du heute gemacht?\nUserTurn 8: Ich habe ganz normal gefrühstückt.\nUserTurn 9: Hallo, kannst du mich hören?\nUserTurn 10: Can you hear me?\nUserTurn 11: Guten Tag. Ich bin Herr Drescher.\nUserTurn 12: Was machst du hier?\nUserTurn 13: Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?\nUserTurn 14: Ich heiße Holger Drescher.\nUserTurn 15: Ich bin 66 Jahre alt. Und was hast du heute gemacht?\nUserTurn 16: Ich habe ganz normal gefrühstückt.\nUserTurn 17: Hallo, kannst du mich hören?\nUserTurn 18: Can you hear me?\nUserTurn 19: Guten Tag. Ich bin Herr Drescher.\nUserTurn 20: Was machst du hier?\nUserTurn 21: Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?\nUserTurn 22: Ich heiße Holger Drescher.\nUserTurn 23: Ich bin 66 Jahre alt. Und was hast du heute gemacht?\nUserTurn 24: Ich habe ganz normal gefrühstückt.\n\nTURN_CONTEXT (AI shown for context only, DO NOT SCORE AI):\nTurn 1:\nAI (context only): Guten Tag,\nUser (score this): Hallo, kannst du mich hören?\n\nTurn 2:\nAI (context only): Guten Tag, ich bin Herr Drescher.\nUser (score this): Can you hear me?\n\nTurn 3:\nAI (context only): Guten Tag, ich bin Herr Drescher.\nUser (score this): Guten Tag. Ich bin Herr Drescher.\n\nTurn 4:\nAI (context only): Guten Tag, ich bin Herr Drescher.\nUser (score this): Was machst du hier?\n\nTurn 5:\nAI (context only): Ich heiße Holger Drescher und ich bin 66 Jahre\nUser (score this): Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?\n\nTurn 6:\nAI (context only): Ich bin 66 Jahre alt.\nUser (score this): Ich heiße Holger Drescher.\n\nTurn 7:\nAI (context only): Ich bin 66 Jahre alt.\nUser (score this): Ich bin 66 Jahre alt. Und was hast du heute gemacht?\n\nTurn 8:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Ich habe ganz normal gefrühstückt.\n\nTurn 9:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Hallo, kannst du mich hören?\n\nTurn 10:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Can you hear me?\n\nTurn 11:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Guten Tag. Ich bin Herr Drescher.\n\nTurn 12:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Was machst du hier?\n\nTurn 13:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?\n\nTurn 14:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Ich heiße Holger Drescher.\n\nTurn 15:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Ich bin 66 Jahre alt. Und was hast du heute gemacht?\n\nTurn 16:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Ich habe ganz normal gefrühstückt.\n\nTurn 17:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Hallo, kannst du mich hören?\n\nTurn 18:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Can you hear me?\n\nTurn 19:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Guten Tag. Ich bin Herr Drescher.\n\nTurn 20:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Was machst du hier?\n\nTurn 21:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Ich hatte heute Morgen ein starkes Enge. Und wie heißt sie? Wie alt bist du?\n\nTurn 22:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Ich heiße Holger Drescher.\n\nTurn 23:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Ich bin 66 Jahre alt. Und was hast du heute gemacht?\n\nTurn 24:\nAI (context only): Ich habe ganz normal gefrühstückt, und kurz danach habe ich mich\nUser (score this): Ich habe ganz normal gefrühstückt.\n\n\nREALTIME_AI_FEEDBACK_CONTEXT (optional, do not let this override user evidence):\n[none]\n\n\nGib NUR folgendes JSON zurueck (kein Markdown, kein Zusatztext ausserhalb des Objekts):\n{\n  \"finalVerdict\": \"<PASSED oder FAILED>\",\n  \"totalScore\": <0-20 float>,\n  \"passingThreshold\": 12,\n  \"maxScore\": 20,\n  \"criteria\": {\n    \"content\": {\"score\": <0-3.99 float>, \"feedback\": \"<konkrete Begruendung mit Fallbezug auf Deutsch>\"},\n    \"conversation\": {\"score\": <0-3.99 float>, \"feedback\": \"<konkrete Begruendung zur Interaktion auf Deutsch>\"},\n    \"vocabulary\": {\"score\": <0-3.99 float>, \"feedback\": \"<konkrete Begruendung zum Wortschatz auf Deutsch>\"},\n    \"grammar\": {\"score\": <0-3.99 float>, \"feedback\": \"<konkrete Begruendung zur Grammatik auf Deutsch>\"},\n    \"pronunciation\": {\"score\": <0-3.99 float>, \"feedback\": \"<vorsichtige textbasierte Begruendung auf Deutsch>\"}\n  },\n  \"strengths\": [\"<3-5 konkrete Staerken mit Beleg>\"],\n  \"areasForImprovement\": [\"<3-5 konkrete Verbesserungsbereiche mit Beleg>\"],\n  \"criticalErrors\": [\"<kritische Fehler die zu Missverstaendnissen fuehren; leeres Array falls keine>\"],\n  \"overallFeedback\": \"<3-5 Saetze praezises, konstruktives Gesamtfeedback direkt an den Kandidaten auf Deutsch>\"\n}"}
   ],
   "temperature": 0.2,
   "max_tokens": 900
