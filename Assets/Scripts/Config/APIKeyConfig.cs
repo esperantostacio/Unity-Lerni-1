@@ -26,11 +26,18 @@ namespace MedicalExam
         [Header("Wit.ai — fallback TTS")]
         [SerializeField] private string witAiToken = "";
 
+        [Header("Azure Speech — per-turn pronunciation assessment")]
+        [SerializeField] private string azureSpeechKey = "";
+        [Tooltip("Region of the Azure Speech resource the key belongs to, e.g. westeurope. A key only works in its own region.")]
+        [SerializeField] private string azureSpeechRegion = "westeurope";
+
         public string OpenAIApiKey => openAIApiKey;
         public string AnthropicApiKey => anthropicApiKey;
         public string ElevenLabsApiKey => elevenLabsApiKey;
         public string MurfAiApiKey => murfAiApiKey;
         public string WitAiToken => witAiToken;
+        public string AzureSpeechKey => azureSpeechKey;
+        public string AzureSpeechRegion => azureSpeechRegion;
 
         private static APIKeyConfig _instance;
 

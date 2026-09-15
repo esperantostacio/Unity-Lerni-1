@@ -103,6 +103,21 @@ For every future prompt-related request in this repo:
 
 ## Update Log
 
+### 2026-09-15 - Azure Pronunciation Assessment Actually Working
+- Achieved:
+  - Found the Azure per-turn pronunciation feature (added 2026-04-21) had never produced a result: the scene key was invalid (401) and the response parser looked for a nested `PronunciationAssessment` object that the REST short-audio API does not return (scores sit directly on `NBest[0]` and each `Words[i]`). Every turn failed with "No PronunciationAssessment field in response."
+  - Parser now accepts both shapes, uses Azure's `PronScore` as the overall score, and no longer counts prosody as 0 (Azure does not score prosody for de-DE). Words flagged `Mispronunciation` are now listed as problem words too.
+  - Azure key + region moved into the shared `APIKeyConfig` (`Assets/Resources/APIKeys.asset`, git-ignored), which wins over the fields serialized on the component, same as the other services.
+  - Verified the key against Azure with a German test sentence: accuracy 91, fluency 99, completeness 92, PronScore 92.8. The key belongs to region `westeurope` (401 in `germanywestcentral`).
+  - Results flow as before: `[Azure] ...` line → `_pronunciationNotesLog` → `PRONUNCIATION_TRACKING_NOTES_PER_TURN` in the final evaluation payload, which the evaluation prompts use as primary evidence for the Aussprache criterion.
+- Files edited:
+  - [Assets/Scripts/AzurePronunciationService.cs](Assets/Scripts/AzurePronunciationService.cs) — key/region resolution, response parsing
+  - [Assets/Scripts/Config/APIKeyConfig.cs](Assets/Scripts/Config/APIKeyConfig.cs) — `azureSpeechKey`, `azureSpeechRegion`
+- Next best action:
+  - Each machine: select `Assets/Resources/APIKeys.asset`, fill **Azure Speech Key** and **Azure Speech Region** (`westeurope`)
+  - Run a session and check the Console for `[Azure] Scores — acc=... flu=...` after each user turn
+  - The old invalid Azure key is still serialized in the tracked scene (and git history); clear `subscriptionKey` on the `AzurePronunciationService` component next time the scene is saved
+
 ### 2026-05-17 - gpt-realtime-2 API Migration (Breaking Schema Changes)
 - Achieved:
   - Fixed `"Unknown parameter: 'session.modalities'"` error that blocked all sessions
