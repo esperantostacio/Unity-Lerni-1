@@ -19,7 +19,6 @@ public class OpenAIRealtimeClient : MonoBehaviour
     };
 
     [Header("Configuration")]
-    [SerializeField] private string apiKey;
     [SerializeField] private string model = DefaultRealtimeModel;
     [SerializeField] private string reasoningEffort = "low"; // Realtime 2: low/medium/high
     
@@ -168,9 +167,8 @@ public class OpenAIRealtimeClient : MonoBehaviour
 
         // Exposes the API key so MedicalExamManager can reuse it for the lightweight
         // per-turn pronunciation tracking coroutine in Realtime mode.
-        // The shared APIKeyConfig asset wins when set, so rotating one key there fixes every
-        // component even if a stale key is still serialized on this one.
-        public string ApiKey => !string.IsNullOrWhiteSpace(APIKeyConfig.Instance?.OpenAIApiKey) ? APIKeyConfig.Instance.OpenAIApiKey : apiKey;
+        // Keep the credential in the ignored shared asset so all OpenAI requests use one value.
+        public string ApiKey => APIKeyConfig.Instance?.OpenAIApiKey ?? string.Empty;
 
         private void OnDestroy()
         {
@@ -191,6 +189,15 @@ public class OpenAIRealtimeClient : MonoBehaviour
         private IEnumerator ConnectCoroutine()
         {
             _isConnecting = true;
+
+            if (string.IsNullOrWhiteSpace(ApiKey))
+            {
+                _isConnecting = false;
+                const string message = "OpenAI API key is not configured. Set it in Assets/Resources/APIKeys.asset.";
+                Debug.LogError($"[OpenAIRealtimeClient] {message}");
+                OnError?.Invoke(message);
+                yield break;
+            }
 
             model = NormalizeRealtimeModel(model);
 
