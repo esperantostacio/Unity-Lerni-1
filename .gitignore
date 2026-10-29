@@ -114,3 +114,7 @@ Assets/_Recovery/
 # Standalone build output folders
 apk builds/
 mono_crash.*.blob
+
+# Local-only: Meta XR API layer binaries and Burst debug output from builds
+Assets/XR/APILayers~/
+apks/

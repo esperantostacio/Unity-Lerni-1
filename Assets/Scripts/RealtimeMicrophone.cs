@@ -28,6 +28,7 @@ public class RealtimeMicrophone : MonoBehaviour
     // Internal state
     private AudioClip _microphoneClip;
     private string _device;
+    private bool _permissionRequested;
     private int _lastSamplePos;
     private bool _isRecording;
 
@@ -83,6 +84,22 @@ public class RealtimeMicrophone : MonoBehaviour
     public void StartStreaming()
     {
         if (_isRecording) return;
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        // Unity 6 no longer prompts for manifest permissions at launch; without this the
+        // mic silently records nothing on Quest and the model never hears the user.
+        if (!UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.Microphone))
+        {
+            if (_permissionRequested) return;
+            _permissionRequested = true;
+            var callbacks = new UnityEngine.Android.PermissionCallbacks();
+            callbacks.PermissionGranted += _ => { _permissionRequested = false; StartStreaming(); };
+            callbacks.PermissionDenied += _ => { _permissionRequested = false; Debug.LogError("[RealtimeMicrophone] Microphone permission denied."); };
+            Debug.Log("[RealtimeMicrophone] Requesting microphone permission.");
+            UnityEngine.Android.Permission.RequestUserPermission(UnityEngine.Android.Permission.Microphone, callbacks);
+            return;
+        }
+#endif
 
         if (Microphone.devices.Length == 0)
         {

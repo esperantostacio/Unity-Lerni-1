@@ -393,7 +393,8 @@ namespace MedicalExam
         public void StartConversation()
         {
             Debug.Log("[MedicalExamManager] Start Conversation button clicked!");
-            
+            ShowOnlyCaseOnBoard();
+
             EnsureEvidenceLoggerSessionStarted("StartConversation");
             string scenarioPrompt = ApplyPromptPlaceholders(ResolveWhisperStartPromptForSelectedRole());
             
@@ -662,10 +663,10 @@ namespace MedicalExam
         [Tooltip("Shown when Doctor-to-Doctor is selected.")]
         [SerializeField] private GameObject doctorToDoctorDetailPanel;
 
-        [Tooltip("Main text field inside the Doctor-to-Patient detail panel.")]
+        [Tooltip("Case text under 'Patientenfall' in the Doctor-to-Patient detail panel. Filled from the selected case's board_text.")]
         [SerializeField] private TMP_Text patientToDoctorDetailText;
 
-        [Tooltip("Main text field inside the Doctor-to-Doctor detail panel.")]
+        [Tooltip("Case text under 'Patientenfall' in the Doctor-to-Doctor detail panel. Filled from the selected case's full text, with styled headings.")]
         [SerializeField] private TMP_Text doctorToDoctorDetailText;
         [SerializeField] private AudioSource aiAudioSource; // Reference to the AI's audio source for checking if speaking
         [SerializeField] private FineTunedGPT4EvaluationService fineTunedEvalService;
@@ -843,7 +844,7 @@ namespace MedicalExam
              "- Google Sheets: https://docs.google.com/spreadsheets/d/<ID>/gviz/tq?tqx=out:csv&sheet=Prompts\n" +
              "- Excel/OneDrive: a share link that downloads the file as CSV (must return CSV, not HTML).")]
         [UnityEngine.Serialization.FormerlySerializedAs("googleSheetCsvUrl")]
-        [SerializeField] private string remotePromptsCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1gLT7Wilguui1K0jIevQGSpdpeABsC1DLxWXcrQgTcs7MDvkYTem-ax8Gx-FdnNDhzvsWsVpACCI6/pub?output=csv";
+        [SerializeField] private string remotePromptsCsvUrl = "https://docs.google.com/spreadsheets/d/14V5-WlQFwEs_OSlmNYty7IQ5eZNA8Hrf49_YIrrxh1g/export?format=csv&gid=1896771007";
 
         [Tooltip("Prompt locale to select from the sheet (e.g., 'de', 'en', or '*').")]
         [SerializeField] private string promptLocale = "de";
@@ -872,6 +873,8 @@ namespace MedicalExam
         private string _selectedCaseId;
         private string _selectedCaseTitle;
         private string _selectedCaseText;
+        private RoleType _selectedCaseForRole = RoleType.None;
+        private string _selectedCaseBoardText;
         private string _selectedCaseTermsJson;
         private string _selectedCaseCoreFactsJson;
         private string _selectedCaseExpectedQuestionsJson;
@@ -1726,6 +1729,8 @@ namespace MedicalExam
             _selectedCaseId = null;
             _selectedCaseTitle = null;
             _selectedCaseText = null;
+            _selectedCaseForRole = RoleType.None;
+            _selectedCaseBoardText = null;
             _selectedCaseTermsJson = null;
             _selectedCaseCoreFactsJson = null;
             _selectedCaseExpectedQuestionsJson = null;
@@ -1788,6 +1793,10 @@ namespace MedicalExam
 
             ActiveScenarioId = activeScenarioId;
             ResetSelectedCaseCache();
+
+            // A role may already be chosen while the scenario list was still loading; show the new case.
+            if (selectedRole != RoleType.None)
+                RefreshRoleDetailPanelTexts();
         }
 
         private IEnumerator StartRealtimeSessionWithOptionalRag(string baseInstructions)
@@ -2416,6 +2425,10 @@ namespace MedicalExam
             // Always refresh role instruction text when a role is selected.
             RefreshRoleDetailPanelTexts();
 
+            // Before Start the board shows the task again above the case (hidden once the conversation starts).
+            SetBoardTaskVisible(patientToDoctorDetailPanel, true);
+            SetBoardTaskVisible(doctorToDoctorDetailPanel, true);
+
             // Toggle detail panels based on selected role
             if (doctorToDoctorDetailPanel != null)
                 doctorToDoctorDetailPanel.SetActive(role == RoleType.DoctorToDoctor);
@@ -2427,149 +2440,230 @@ namespace MedicalExam
         {
             EnsureDetailPanelTextReferences();
 
-            if (patientToDoctorDetailText != null)
-                patientToDoctorDetailText.text = BuildDoctorToPatientDetailPanelText();
+            TMP_Text target = selectedRole == RoleType.DoctorToDoctor ? doctorToDoctorDetailText
+                : selectedRole == RoleType.DoctorToPatient ? patientToDoctorDetailText
+                : null;
+            if (target != null)
+            {
+                target.text = BuildCaseBoardText();
+                FitBoardToCaseText(target);
+            }
+        }
 
-            if (doctorToDoctorDetailText != null)
-                doctorToDoctorDetailText.text = BuildDoctorToDoctorDetailPanelText();
+        // Scene heights of the board scroll contents, so each case is fitted from the original layout.
+        private readonly Dictionary<RectTransform, float> _boardContentBaseHeight = new Dictionary<RectTransform, float>();
+        // Scene y position (x) and height (y) of the board case texts.
+        private readonly Dictionary<RectTransform, Vector2> _boardTextBaseRect = new Dictionary<RectTransform, Vector2>();
+
+        /// <summary>
+        /// The d2d board shows a full information sheet: keep the text at the panel's normal size instead of
+        /// auto-shrinking it into its small rect, and make the scroll content long enough to scroll to its end.
+        /// </summary>
+        private void FitBoardToCaseText(TMP_Text caseText)
+        {
+            var content = caseText.transform.parent != null ? caseText.transform.parent.parent as RectTransform : null;
+            if (content == null)
+                return;
+
+            if (caseText.enableAutoSizing)
+            {
+                caseText.enableAutoSizing = false;
+                caseText.fontSize = caseText.fontSizeMax;
+            }
+
+            if (!_boardContentBaseHeight.ContainsKey(content))
+                _boardContentBaseHeight[content] = content.sizeDelta.y;
+
+            var textRect = caseText.rectTransform;
+            if (!_boardTextBaseRect.ContainsKey(textRect))
+                _boardTextBaseRect[textRect] = new Vector2(textRect.anchoredPosition.y, textRect.sizeDelta.y);
+            Vector2 baseRect = _boardTextBaseRect[textRect];
+
+            // Grow the text rect downward from its top edge so the text never spills over the heading above it.
+            float textHeight = Mathf.Max(baseRect.y, caseText.GetPreferredValues(caseText.text, textRect.rect.width, 0f).y);
+            textRect.sizeDelta = new Vector2(textRect.sizeDelta.x, textHeight);
+            textRect.anchoredPosition = new Vector2(textRect.anchoredPosition.x, baseRect.x - (textHeight - baseRect.y) * (1f - textRect.pivot.y));
+
+            Vector3 textTopWorld = textRect.TransformPoint(new Vector3(0f, textRect.rect.yMax, 0f));
+            float textTopInContent = content.InverseTransformPoint(textTopWorld).y; // negative: below the content's top edge
+            float needed = -textTopInContent + textHeight + 5f;
+
+            content.sizeDelta = new Vector2(content.sizeDelta.x, Mathf.Max(_boardContentBaseHeight[content], needed));
+        }
+
+        // Original y of the "Patientenfall" block per panel, so the task text can be shown again on the next role selection.
+        private readonly Dictionary<RectTransform, float> _caseBlockBaseY = new Dictionary<RectTransform, float>();
+
+        /// <summary>
+        /// Once the conversation starts, the board shows only the case: the "Aufgabenstellung" block
+        /// (already spoken as the instructions) is hidden and "Patientenfall" moves to its place at the top.
+        /// </summary>
+        public void ShowOnlyCaseOnBoard()
+        {
+            SetBoardTaskVisible(patientToDoctorDetailPanel, false);
+            SetBoardTaskVisible(doctorToDoctorDetailPanel, false);
+        }
+
+        private void SetBoardTaskVisible(GameObject panel, bool taskVisible)
+        {
+            EnsureDetailPanelTextReferences();
+            TMP_Text caseText = panel == patientToDoctorDetailPanel ? patientToDoctorDetailText : doctorToDoctorDetailText;
+            // Scene layout: scroll Content / "auftitle (1)" (Patientenfall heading) / "depstiopatient" (case text),
+            // with the "startdescp" task block as a sibling of the heading.
+            var caseBlock = caseText != null ? caseText.transform.parent as RectTransform : null;
+            var content = caseBlock != null ? caseBlock.parent : null;
+            var taskBlock = content != null ? content.Find("startdescp") as RectTransform : null;
+            if (taskBlock == null)
+                return;
+
+            if (!_caseBlockBaseY.ContainsKey(caseBlock))
+                _caseBlockBaseY[caseBlock] = caseBlock.anchoredPosition.y;
+
+            float caseY = _caseBlockBaseY[caseBlock];
+            if (!taskVisible)
+            {
+                // Put the top edge of the case block where the top edge of the task block is.
+                float taskTop = taskBlock.anchoredPosition.y + taskBlock.rect.height * (1f - taskBlock.pivot.y);
+                caseY = taskTop - caseBlock.rect.height * (1f - caseBlock.pivot.y);
+            }
+
+            taskBlock.gameObject.SetActive(taskVisible);
+            caseBlock.anchoredPosition = new Vector2(caseBlock.anchoredPosition.x, caseY);
+            FitBoardToCaseText(caseText);
+
+            var scroll = caseBlock.GetComponentInParent<ScrollRect>(true);
+            if (scroll != null)
+                scroll.verticalNormalizedPosition = 1f;
         }
 
         private void EnsureDetailPanelTextReferences()
         {
-            if (patientToDoctorDetailText == null && patientToDoctorDetailPanel != null)
-                patientToDoctorDetailText = patientToDoctorDetailPanel.GetComponentInChildren<TMP_Text>(true);
+            if (patientToDoctorDetailText == null)
+                patientToDoctorDetailText = FindCaseBoardText(patientToDoctorDetailPanel);
 
-            if (doctorToDoctorDetailText == null && doctorToDoctorDetailPanel != null)
-                doctorToDoctorDetailText = doctorToDoctorDetailPanel.GetComponentInChildren<TMP_Text>(true);
+            if (doctorToDoctorDetailText == null)
+                doctorToDoctorDetailText = FindCaseBoardText(doctorToDoctorDetailPanel);
         }
 
-        private string BuildDoctorToPatientDetailPanelText()
+        // The panels hold several texts (title, instructions, headings); the case text object is named "depstiopatient".
+        private static TMP_Text FindCaseBoardText(GameObject panel)
         {
-            string caseSummary = string.IsNullOrWhiteSpace(_selectedCaseText)
-                ? GetScenarioContext()
-                : _selectedCaseText.Trim();
+            if (panel == null)
+                return null;
+
+            foreach (var text in panel.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (text.gameObject.name == "depstiopatient")
+                    return text;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Text shown on the board under "Patientenfall" for the case selected for the current role.
+        /// d2d shows the full case text (including the diagnosis) with styled headings.
+        /// d2p shows the case's board_text from cases_json and never falls back to the full case text,
+        /// which holds information the patient reveals only when asked.
+        /// </summary>
+        private string BuildCaseBoardText()
+        {
+            // Resolves (and if needed randomly selects) the case for the current role.
+            string caseText = GetScenarioContext();
+
+            if (selectedRole == RoleType.DoctorToDoctor)
+                return string.IsNullOrWhiteSpace(caseText) ? "Kein Falltext verfügbar." : FormatCaseTextForBoard(caseText);
+
+            if (!string.IsNullOrWhiteSpace(_selectedCaseBoardText))
+                return _selectedCaseBoardText;
 
             string topic = GetScenarioTopicD2P();
-            if (!string.IsNullOrWhiteSpace(topic))
+            return string.IsNullOrWhiteSpace(topic) ? "Kein Falltext verfügbar." : topic.Trim();
+        }
+
+        // Words kept lowercase when a CAPS heading is turned into a normal German heading.
+        private static readonly HashSet<string> HeadingLowercaseWords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "und", "oder", "des", "der", "die", "das", "dem", "den", "bei", "mit", "von", "im", "in", "zu", "zur", "zum", "auf", "für"
+        };
+
+        /// <summary>
+        /// Case text for the board: the title line and CAPS section headings ("LEITSYMPTOM") become bold,
+        /// slightly larger headings in normal case ("Leitsymptom"), like the headings in the feedback;
+        /// indented continuation lines are joined back onto their bullet. The examiner's questions
+        /// ("RÜCKFRAGEN DES PRÜFERS", "MÖGLICHE FRAGEN DES CHEFARZTES") are left out.
+        /// </summary>
+        private static string FormatCaseTextForBoard(string caseText)
+        {
+            var lines = caseText.Trim().Replace("\r\n", "\n").Split('\n');
+            var result = new List<string>(lines.Length);
+            bool skippingQuestions = false;
+
+            for (int i = 0; i < lines.Length; i++)
             {
-                string t = topic.Trim();
-                if (!caseSummary.Contains(t, StringComparison.OrdinalIgnoreCase))
-                    caseSummary = string.IsNullOrWhiteSpace(caseSummary) ? t : (caseSummary + " " + t);
-            }
+                string line = lines[i];
+                string trimmed = line.Trim();
 
-            return
-                "Führen Sie ein strukturiertes Anamnesegespräch und erheben Sie dabei die persönlichen Daten, aktuellen Beschwerden, Vorerkrankungen, die Medikation, und Familienanamnese.\n\n" +
-                "Leiten Sie daraus mögliche Verdachtsdiagnosen ab, unterbreiten Sie Vorschläge zur weiterführenden Diagnostik und Therapie und erläutern Sie die Maßnahmen.\n\n" +
-                "Verwenden Sie dabei allgemein verständliche Formulierungen und verzichten Sie, soweit möglich, auf medizinische Fachterminologie. Schriftliche Notizen sind zulässig.\n\n" +
-                "Patientenfall:\n" +
-                (string.IsNullOrWhiteSpace(caseSummary) ? "Kein Falltext verfügbar." : caseSummary);
-        }
-
-        private string BuildDoctorToDoctorDetailPanelText()
-        {
-            var coreFacts = GetScenarioCoreFactsList();
-
-            string diagnose = StripLeadingLabel(FindFirstFactContains(coreFacts, "verdachtsdiagnose", "diagnose"));
-            string nameAge = StripLeadingLabel(FindFirstFactContains(coreFacts, "patient:"));
-            string hergang = StripLeadingLabel(FindFirstFactContains(coreFacts, "symptomatik", "aufnahme"));
-            string vorerkrankungen = StripLeadingLabel(FindFirstFactContains(coreFacts, "vorerkrank"));
-            string allergien = StripLeadingLabel(FindFirstFactContains(coreFacts, "allerg"));
-            string risikofaktoren = StripLeadingLabel(FindFirstFactContains(coreFacts, "risikofaktor"));
-            string sozial = StripLeadingLabel(FindFirstFactContains(coreFacts, "sozialanamnese"));
-            string familie = StripLeadingLabel(FindFirstFactContains(coreFacts, "familienanamnese"));
-            string vitaleEd = StripLeadingLabel(FindFirstFactContains(coreFacts, "vitale zeichen ed", "vital"));
-            string untersuchung = StripLeadingLabel(FindFirstFactContains(coreFacts, "klinische untersuchung", "untersuchung"));
-            string laborUnauff = StripLeadingLabel(FindFirstFactContains(coreFacts, "laborwerte unauff", "laborwerte unauffällig", "normwertig"));
-            string laborVeraendert = StripLeadingLabel(FindFirstFactContains(coreFacts, "laborwerte erh", "veränderte laborwerte", "troponin", "hba1c"));
-            string ekg = StripLeadingLabel(FindFirstFactContains(coreFacts, "ecg", "ekg"));
-            string medVor = StripLeadingLabel(FindFirstFactContains(coreFacts, "medikation vor", "medikation:"));
-            string medNeu = StripLeadingLabel(FindFirstFactContains(coreFacts, "medikation station", "pausiert"));
-            string vitaleAktuell = StripLeadingLabel(FindFirstFactContains(coreFacts, "vitale zeichen aktuell", "aktuell asymptomatisch", "aktuell:"));
-            string procedere = StripLeadingLabel(FindFirstFactContains(coreFacts, "procedere", "geplantes procedere", "koronarangiografie", "pci"));
-
-            var builder = new System.Text.StringBuilder(1024);
-            builder.AppendLine("Stellen Sie den vorliegenden Patientenfall der ärztlichen Leitung vor und beantworten Sie mögliche Rückfragen. Verwenden Sie dabei die medizinische Fachterminologie.");
-            builder.AppendLine();
-            builder.AppendLine("Im Anschluss werden nach dem Zufallsprinzip fünf gängige medizinische Fachbegriffe ausgewählt. Bitte erklären Sie deren jeweilige Bedeutung einmal mündlich.");
-            builder.AppendLine();
-            builder.AppendLine("Patientenfall:");
-
-            string title = string.IsNullOrWhiteSpace(_selectedCaseTitle) ? GetScenarioName() : _selectedCaseTitle.Trim();
-            if (!string.IsNullOrWhiteSpace(title))
-                builder.AppendLine(title);
-
-            builder.AppendLine();
-            builder.AppendLine("Informationsblatt:");
-            AppendInfoLine(builder, "(Verdachts-)Diagnose/Leitsymptom", diagnose);
-            AppendInfoLine(builder, "Name, Alter", nameAge);
-            AppendInfoLine(builder, "Hergang bei der Aufnahme", hergang);
-            AppendInfoLine(builder, "Vorerkrankungen", vorerkrankungen);
-            AppendInfoLine(builder, "Allergien", allergien);
-            AppendInfoLine(builder, "Risikofaktoren", risikofaktoren);
-            AppendInfoLine(builder, "Sozialanamnese", sozial);
-            AppendInfoLine(builder, "Familienanamnese", familie);
-            AppendInfoLine(builder, "Vitalparameter bei Aufnahme", vitaleEd);
-            AppendInfoLine(builder, "Körperliche Untersuchung", untersuchung);
-            AppendInfoLine(builder, "Wichtige Laborwerte (unauffällig)", laborUnauff);
-            AppendInfoLine(builder, "Wichtige Laborwerte (verändert)", laborVeraendert);
-            AppendInfoLine(builder, "Wichtige apparative Untersuchungen", ekg);
-            AppendInfoLine(builder, "Medikation bisher", medVor);
-            AppendInfoLine(builder, "Neu angesetzt/umgestellt", medNeu);
-            AppendInfoLine(builder, "Stationärer Verlauf", vitaleAktuell);
-            AppendInfoLine(builder, "Procedere", procedere);
-
-            return builder.ToString().Trim();
-        }
-
-        private static void AppendInfoLine(System.Text.StringBuilder builder, string label, string value)
-        {
-            if (builder == null || string.IsNullOrWhiteSpace(label) || string.IsNullOrWhiteSpace(value))
-                return;
-
-            builder.AppendLine(label + ": " + value.Trim());
-        }
-
-        private List<string> GetScenarioCoreFactsList()
-        {
-            var items = new List<string>();
-            AddItemsFromItemsJson(items, GetScenarioCoreFactsJson());
-            return items;
-        }
-
-        private static string FindFirstFactContains(List<string> facts, params string[] tokens)
-        {
-            if (facts == null || facts.Count == 0 || tokens == null || tokens.Length == 0)
-                return string.Empty;
-
-            for (int i = 0; i < facts.Count; i++)
-            {
-                string fact = facts[i];
-                if (string.IsNullOrWhiteSpace(fact))
+                bool isHeadingLine = i > 0 && trimmed.Length > 2 && !trimmed.StartsWith("-") && IsAllCaps(trimmed);
+                if (isHeadingLine)
+                    skippingQuestions = IsExaminerQuestionsHeading(trimmed);
+                if (skippingQuestions)
                     continue;
 
-                string lowerFact = fact.ToLowerInvariant();
-                for (int t = 0; t < tokens.Length; t++)
+                if (line.Length > 0 && char.IsWhiteSpace(line[0]) && trimmed.Length > 0 && !trimmed.StartsWith("-")
+                    && result.Count > 0 && result[result.Count - 1].Length > 0)
                 {
-                    string token = tokens[t];
-                    if (!string.IsNullOrWhiteSpace(token) && lowerFact.Contains(token.ToLowerInvariant()))
-                        return fact.Trim();
+                    result[result.Count - 1] += " " + trimmed;
+                    continue;
                 }
+
+                bool isTitle = i == 0;
+                bool isCapsHeading = trimmed.Length > 2 && !trimmed.StartsWith("-") && IsAllCaps(trimmed);
+
+                if (isTitle || isCapsHeading)
+                    result.Add($"<b><size=120%>{(isCapsHeading ? ToHeadingCase(trimmed) : trimmed)}</size></b>");
+                else
+                    result.Add(trimmed);
             }
 
-            return string.Empty;
+            return string.Join("\n", result).Trim();
         }
 
-        private static string StripLeadingLabel(string value)
+        private static bool IsExaminerQuestionsHeading(string capsHeading)
         {
-            if (string.IsNullOrWhiteSpace(value))
-                return string.Empty;
+            string heading = capsHeading.ToUpperInvariant();
+            return heading.StartsWith("RÜCKFRAGEN") || heading.Contains("FRAGEN DES");
+        }
 
-            string clean = value.Trim();
-            int idx = clean.IndexOf(':');
-            if (idx >= 0 && idx < clean.Length - 1)
-                return clean.Substring(idx + 1).Trim();
+        private static bool IsAllCaps(string text)
+        {
+            bool hasLetter = false;
+            foreach (char c in text)
+            {
+                if (char.IsLower(c))
+                    return false;
+                hasLetter |= char.IsLetter(c);
+            }
+            return hasLetter;
+        }
 
-            return clean;
+        private static string ToHeadingCase(string capsHeading)
+        {
+            var words = capsHeading.ToLowerInvariant().Split(' ');
+            for (int i = 0; i < words.Length; i++)
+            {
+                string word = words[i];
+                if (word.Length == 0 || (i > 0 && HeadingLowercaseWords.Contains(word)))
+                    continue;
+
+                int first = 0;
+                while (first < word.Length && !char.IsLetter(word[first]))
+                    first++;
+                if (first < word.Length)
+                    words[i] = word.Substring(0, first) + char.ToUpperInvariant(word[first]) + word.Substring(first + 1);
+            }
+
+            return string.Join(" ", words);
         }
 
         /// <summary>
@@ -3782,8 +3876,10 @@ namespace MedicalExam
                 return false;
 
             string scenarioId = string.IsNullOrWhiteSpace(activeScenarioId) ? "default" : activeScenarioId.Trim();
+            // Reuse the selected case only while the role still matches; switching roles picks a case for the new role.
             if (string.Equals(_selectedCaseScenarioId, scenarioId, StringComparison.OrdinalIgnoreCase)
-                && !string.IsNullOrWhiteSpace(_selectedCaseText))
+                && !string.IsNullOrWhiteSpace(_selectedCaseText)
+                && _selectedCaseForRole == selectedRole)
             {
                 caseText = _selectedCaseText;
                 return true;
@@ -3817,6 +3913,8 @@ namespace MedicalExam
             _selectedCaseId = selected.caseId;
             _selectedCaseTitle = selected.title;
             _selectedCaseText = selected.text;
+            _selectedCaseForRole = selectedRole;
+            _selectedCaseBoardText = selected.boardText;
             _selectedCaseTermsJson = selected.termsJson;
             _selectedCaseCoreFactsJson = selected.coreFactsJson;
             _selectedCaseExpectedQuestionsJson = selected.expectedQuestionsJson;
@@ -3862,6 +3960,7 @@ namespace MedicalExam
             public string role;
             public string title;
             public string text;
+            public string boardText;
             public string termsJson;
             public string coreFactsJson;
             public string expectedQuestionsJson;
@@ -3941,6 +4040,7 @@ namespace MedicalExam
                             role = (obj["role"]?.ToString() ?? string.Empty).Trim(),
                             title = title.Trim(),
                             text = text.Trim(),
+                            boardText = (obj["board_text"]?.ToString() ?? string.Empty).Trim(),
                             termsJson = ((obj["terms"] ?? obj["term_focus"] ?? obj["term_priorities"])?.ToString() ?? string.Empty).Trim(),
                             coreFactsJson = ((obj["core_facts"] ?? obj["presentation_core_facts"] ?? obj["facts"])?.ToString() ?? string.Empty).Trim(),
                             expectedQuestionsJson = ((obj["expected_questions"] ?? obj["examiner_questions"] ?? obj["discussion_questions"])?.ToString() ?? string.Empty).Trim(),

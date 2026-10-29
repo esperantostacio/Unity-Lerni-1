@@ -31,9 +31,13 @@ Before installing this package, add **NativeWebSocket**:
 ### 2. Configure Unity
 
 1. In Unity, go to `Assets/Resources/`
-2. Right-click → Create → OpenAI → Config
-3. Paste your API key in the configuration asset
-4. Save the configuration
+2. Right-click → Create → MedicalExam → API Keys
+3. Paste the key into the **OpenAI** field in `APIKeys.asset`
+4. Save the asset locally; it is ignored by Git and must never be committed
+
+If a key has been shared in chat, source control, logs, or screenshots, revoke it in
+the OpenAI dashboard and create a replacement before entering it in Unity. Do not
+paste keys into `OpenAIRealtimeClient`, scenes, prefabs, or other tracked assets.
 
 ## Core Prefabs
 

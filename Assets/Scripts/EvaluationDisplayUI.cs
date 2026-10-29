@@ -305,29 +305,41 @@ namespace MedicalExam
             return (0f, token.ToString().Trim());
         }
 
-        private static string BuildD2DFiveCriteriaFeedback(ExamEvaluation evaluation)
+        // Feedback body on the result board: plain paragraphs under bold headings that are larger than the body text.
+        private const float FeedbackBodyFontSize = 14f;
+        private const float FeedbackHeadingFontSize = 17f;
+
+        // richText=false gives a tag-free version for logs and text-to-speech.
+        private static string FeedbackSection(string heading, string body, bool richText)
+        {
+            return richText
+                ? $"<b><size={FeedbackHeadingFontSize:0}>{heading}</size></b>\n{body.Trim()}"
+                : $"{heading}:\n{body.Trim()}";
+        }
+
+        private static string BuildD2DFiveCriteriaFeedback(ExamEvaluation evaluation, bool richText = false)
         {
             var sections = new List<string>();
 
             if (!string.IsNullOrWhiteSpace(evaluation.overallFeedback))
-                sections.Add(evaluation.overallFeedback.Trim());
+                sections.Add(FeedbackSection("Zusammenfassung", evaluation.overallFeedback, richText));
 
             var criteriaLines = new List<string>();
-            criteriaLines.Add($"Inhalt: {evaluation.d2dContent:F2} / 3.99" + (string.IsNullOrWhiteSpace(evaluation.d2dContentFeedback) ? string.Empty : $" - {evaluation.d2dContentFeedback}"));
-            criteriaLines.Add($"Interaktion: {evaluation.d2dConversation:F2} / 3.99" + (string.IsNullOrWhiteSpace(evaluation.d2dConversationFeedback) ? string.Empty : $" - {evaluation.d2dConversationFeedback}"));
-            criteriaLines.Add($"Wortschatz: {evaluation.d2dVocabulary:F2} / 3.99" + (string.IsNullOrWhiteSpace(evaluation.d2dVocabularyFeedback) ? string.Empty : $" - {evaluation.d2dVocabularyFeedback}"));
-            criteriaLines.Add($"Grammatik: {evaluation.d2dGrammar:F2} / 3.99" + (string.IsNullOrWhiteSpace(evaluation.d2dGrammarFeedback) ? string.Empty : $" - {evaluation.d2dGrammarFeedback}"));
-            criteriaLines.Add($"Aussprache und Intonation: {evaluation.d2dPronunciation:F2} / 3.99" + (string.IsNullOrWhiteSpace(evaluation.d2dPronunciationFeedback) ? string.Empty : $" - {evaluation.d2dPronunciationFeedback}"));
-            sections.Add(string.Join("\n", criteriaLines));
+            criteriaLines.Add($"Inhalt: {evaluation.d2dContent:F0} / 4" + (string.IsNullOrWhiteSpace(evaluation.d2dContentFeedback) ? string.Empty : $" - {evaluation.d2dContentFeedback}"));
+            criteriaLines.Add($"Interaktion: {evaluation.d2dConversation:F0} / 4" + (string.IsNullOrWhiteSpace(evaluation.d2dConversationFeedback) ? string.Empty : $" - {evaluation.d2dConversationFeedback}"));
+            criteriaLines.Add($"Wortschatz: {evaluation.d2dVocabulary:F0} / 4" + (string.IsNullOrWhiteSpace(evaluation.d2dVocabularyFeedback) ? string.Empty : $" - {evaluation.d2dVocabularyFeedback}"));
+            criteriaLines.Add($"Grammatik: {evaluation.d2dGrammar:F0} / 4" + (string.IsNullOrWhiteSpace(evaluation.d2dGrammarFeedback) ? string.Empty : $" - {evaluation.d2dGrammarFeedback}"));
+            criteriaLines.Add($"Aussprache und Intonation: {evaluation.d2dPronunciation:F0} / 4" + (string.IsNullOrWhiteSpace(evaluation.d2dPronunciationFeedback) ? string.Empty : $" - {evaluation.d2dPronunciationFeedback}"));
+            sections.Add(FeedbackSection("Kriterien", string.Join("\n", criteriaLines), richText));
 
             if (!string.IsNullOrWhiteSpace(evaluation.d2dStrengthsSummary))
-                sections.Add("Stärken:\n" + evaluation.d2dStrengthsSummary.Trim());
+                sections.Add(FeedbackSection("Stärken", evaluation.d2dStrengthsSummary, richText));
 
             if (!string.IsNullOrWhiteSpace(evaluation.d2dAreasForImprovementSummary))
-                sections.Add("Verbesserungsbereiche:\n" + evaluation.d2dAreasForImprovementSummary.Trim());
+                sections.Add(FeedbackSection("Verbesserungsbereiche", evaluation.d2dAreasForImprovementSummary, richText));
 
             if (!string.IsNullOrWhiteSpace(evaluation.d2dCriticalErrorsSummary))
-                sections.Add("Kritische Fehler:\n" + evaluation.d2dCriticalErrorsSummary.Trim());
+                sections.Add(FeedbackSection("Kritische Fehler", evaluation.d2dCriticalErrorsSummary, richText));
 
             return string.Join("\n\n", sections).Trim();
         }
@@ -1710,19 +1722,19 @@ If any score is missing, set it to 0. Make sure all numbers are valid and within
                 {
                     // ── Generic paired fields (primary) ──
                     if (d2dCategory1Text != null) d2dCategory1Text.text = "Inhalt";
-                    if (d2dScore1Text    != null) d2dScore1Text.text    = $"{evaluation.d2dContent:F2} / 3.99";
+                    if (d2dScore1Text    != null) d2dScore1Text.text    = $"{evaluation.d2dContent:F0} / 4";
 
                     if (d2dCategory2Text != null) d2dCategory2Text.text = "Gesprächsfähigkeit";
-                    if (d2dScore2Text    != null) d2dScore2Text.text    = $"{evaluation.d2dConversation:F2} / 3.99";
+                    if (d2dScore2Text    != null) d2dScore2Text.text    = $"{evaluation.d2dConversation:F0} / 4";
 
                     if (d2dCategory3Text != null) d2dCategory3Text.text = "Wortschatz";
-                    if (d2dScore3Text    != null) d2dScore3Text.text    = $"{evaluation.d2dVocabulary:F2} / 3.99";
+                    if (d2dScore3Text    != null) d2dScore3Text.text    = $"{evaluation.d2dVocabulary:F0} / 4";
 
                     if (d2dCategory4Text != null) d2dCategory4Text.text = "Grammatik";
-                    if (d2dScore4Text    != null) d2dScore4Text.text    = $"{evaluation.d2dGrammar:F2} / 3.99";
+                    if (d2dScore4Text    != null) d2dScore4Text.text    = $"{evaluation.d2dGrammar:F0} / 4";
 
                     if (d2dCategory5Text != null) d2dCategory5Text.text = "Aussprache";
-                    if (d2dScore5Text    != null) d2dScore5Text.text    = $"{evaluation.d2dPronunciation:F2} / 3.99";
+                    if (d2dScore5Text    != null) d2dScore5Text.text    = $"{evaluation.d2dPronunciation:F0} / 4";
 
                     StartCoroutine(DisplayFeedbackDelayed(evaluation, 1.5f));
                     Debug.Log($"[EvaluationDisplayUI] Displayed D2D CEO evaluation: Total={evaluation.totalPoints}/20, Passed: {evaluation.passed}");
@@ -1735,19 +1747,19 @@ If any score is missing, set it to 0. Make sure all numbers are valid and within
                 {
                     // ── Generic paired fields (primary) ──
                     if (d2pCategory1Text != null) d2pCategory1Text.text = "Inhalt";
-                    if (d2pScore1Text    != null) d2pScore1Text.text    = $"{evaluation.d2dContent:F2} / 3.99";
+                    if (d2pScore1Text    != null) d2pScore1Text.text    = $"{evaluation.d2dContent:F0} / 4";
 
                     if (d2pCategory2Text != null) d2pCategory2Text.text = "Gesprächsfähigkeit";
-                    if (d2pScore2Text    != null) d2pScore2Text.text    = $"{evaluation.d2dConversation:F2} / 3.99";
+                    if (d2pScore2Text    != null) d2pScore2Text.text    = $"{evaluation.d2dConversation:F0} / 4";
 
                     if (d2pCategory3Text != null) d2pCategory3Text.text = "Wortschatz";
-                    if (d2pScore3Text    != null) d2pScore3Text.text    = $"{evaluation.d2dVocabulary:F2} / 3.99";
+                    if (d2pScore3Text    != null) d2pScore3Text.text    = $"{evaluation.d2dVocabulary:F0} / 4";
 
                     if (d2pCategory4Text != null) d2pCategory4Text.text = "Grammatik";
-                    if (d2pScore4Text    != null) d2pScore4Text.text    = $"{evaluation.d2dGrammar:F2} / 3.99";
+                    if (d2pScore4Text    != null) d2pScore4Text.text    = $"{evaluation.d2dGrammar:F0} / 4";
 
                     if (d2pCategory5Text != null) d2pCategory5Text.text = "Aussprache";
-                    if (d2pScore5Text    != null) d2pScore5Text.text    = $"{evaluation.d2dPronunciation:F2} / 3.99";
+                    if (d2pScore5Text    != null) d2pScore5Text.text    = $"{evaluation.d2dPronunciation:F0} / 4";
 
                     StartCoroutine(DisplayFeedbackDelayed(evaluation, 1.5f));
                     Debug.Log($"[EvaluationDisplayUI] Displayed D2P CEO evaluation: Total={evaluation.totalPoints}/20, Passed: {evaluation.passed}");
@@ -1772,6 +1784,51 @@ If any score is missing, set it to 0. Make sure all numbers are valid and within
             }
         }
 
+        // Original heights/positions of the feedback text, its background box and the scroll content,
+        // so every result is fitted from the scene layout rather than from the previous result.
+        private bool _feedbackLayoutCaptured;
+        private float _feedbackTextBaseHeight;
+        private float _feedbackBoxBaseHeight;
+        private float _feedbackBoxBaseY;
+        private float _feedbackContentBaseHeight;
+
+        /// <summary>
+        /// Shows the feedback at a fixed font size and makes its background box and the scroll content
+        /// taller when the text needs more room, so long feedback can be scrolled instead of shrinking.
+        /// Expects the scene hierarchy: scroll Content / newui / background box / feedback text.
+        /// </summary>
+        private void FitFeedbackTextHeight()
+        {
+            feedbackText.enableAutoSizing = false;
+            feedbackText.fontSize = FeedbackBodyFontSize;
+
+            var textRect = feedbackText.rectTransform;
+            var boxRect = textRect.parent as RectTransform;
+            var contentRect = boxRect != null && boxRect.parent != null ? boxRect.parent.parent as RectTransform : null;
+            if (boxRect == null || contentRect == null)
+                return;
+
+            if (!_feedbackLayoutCaptured)
+            {
+                _feedbackTextBaseHeight = textRect.sizeDelta.y;
+                _feedbackBoxBaseHeight = boxRect.sizeDelta.y;
+                _feedbackBoxBaseY = boxRect.anchoredPosition.y;
+                _feedbackContentBaseHeight = contentRect.sizeDelta.y;
+                _feedbackLayoutCaptured = true;
+            }
+
+            Vector4 margin = feedbackText.margin;
+            float width = textRect.rect.width - margin.x - margin.z;
+            float needed = feedbackText.GetPreferredValues(feedbackText.text, width, 0f).y + margin.y + margin.w;
+            float extra = Mathf.Max(0f, needed - _feedbackTextBaseHeight);
+
+            // Grow downward: the box keeps its top edge, the text grows with it, the scroll content gets longer.
+            textRect.sizeDelta = new Vector2(textRect.sizeDelta.x, _feedbackTextBaseHeight + extra);
+            boxRect.sizeDelta = new Vector2(boxRect.sizeDelta.x, _feedbackBoxBaseHeight + extra);
+            boxRect.anchoredPosition = new Vector2(boxRect.anchoredPosition.x, _feedbackBoxBaseY - extra * 0.5f);
+            contentRect.sizeDelta = new Vector2(contentRect.sizeDelta.x, _feedbackContentBaseHeight + extra);
+        }
+
         /// <summary>
         /// Internal coroutine that displays evaluation UI after a delay
         /// </summary>
@@ -1781,60 +1838,49 @@ If any score is missing, set it to 0. Make sure all numbers are valid and within
 
             if (feedbackText != null)
             {
-                string overall = !string.IsNullOrWhiteSpace(evaluation.overallFeedback) ? evaluation.overallFeedback : evaluation.feedbackText;
-                bool isD2D = evaluation.roleType == ExamEvaluation.RoleType.DoctorToDoctor;
-                string perDimension = "";
-
-                if (isD2D)
+                string body;
+                if (evaluation.usesD2DFiveCriteria)
                 {
-                    if (evaluation.usesD2DFiveCriteria)
-                    {
-                        perDimension = "\n\n---\n" + BuildD2DFiveCriteriaFeedback(evaluation);
-                    }
-                    else if (!string.IsNullOrWhiteSpace(evaluation.sprachlicheAngemessenheitFeedback) ||
-                             !string.IsNullOrWhiteSpace(evaluation.inhaltlicheAngemessenheitFeedback) ||
-                             !string.IsNullOrWhiteSpace(evaluation.malusPatientensicherheitFeedback))
-                    {
-                        perDimension = "\n\n---\n";
-                        if (!string.IsNullOrWhiteSpace(evaluation.sprachlicheAngemessenheitFeedback))
-                            perDimension += $"Sprachliche Angemessenheit: {evaluation.sprachlicheAngemessenheitFeedback}\n";
-                        if (!string.IsNullOrWhiteSpace(evaluation.inhaltlicheAngemessenheitFeedback))
-                            perDimension += $"Inhaltliche Angemessenheit: {evaluation.inhaltlicheAngemessenheitFeedback}\n";
-                        if (!string.IsNullOrWhiteSpace(evaluation.malusPatientensicherheitFeedback))
-                            perDimension += $"Malus Patientensicherheit: {evaluation.malusPatientensicherheitFeedback}";
-                    }
+                    // Already opens with the overall feedback under "Zusammenfassung", so it is not added again.
+                    body = BuildD2DFiveCriteriaFeedback(evaluation, richText: true);
                 }
                 else
                 {
-                    if (evaluation.usesD2DFiveCriteria)
+                    string overall = !string.IsNullOrWhiteSpace(evaluation.overallFeedback) ? evaluation.overallFeedback : evaluation.feedbackText;
+                    bool isD2D = evaluation.roleType == ExamEvaluation.RoleType.DoctorToDoctor;
+                    var criteria = new List<string>();
+
+                    void AddCriterion(string label, string text)
                     {
-                        perDimension = "\n\n---\n" + BuildD2DFiveCriteriaFeedback(evaluation);
+                        if (!string.IsNullOrWhiteSpace(text))
+                            criteria.Add($"{label}: {text.Trim()}");
                     }
-                    else if (!string.IsNullOrWhiteSpace(evaluation.kommunikationFeedback) ||
-                             !string.IsNullOrWhiteSpace(evaluation.hoerverstehenFeedback) ||
-                             !string.IsNullOrWhiteSpace(evaluation.gespraechsfuehrungFeedback) ||
-                             !string.IsNullOrWhiteSpace(evaluation.empathieFeedback) ||
-                             !string.IsNullOrWhiteSpace(evaluation.vollstaendigkeitFeedback))
+
+                    if (isD2D)
                     {
-                        perDimension = "\n\n---\n";
-                        if (!string.IsNullOrWhiteSpace(evaluation.kommunikationFeedback))
-                            perDimension += $"Kommunikation: {evaluation.kommunikationFeedback}\n";
-                        if (!string.IsNullOrWhiteSpace(evaluation.hoerverstehenFeedback))
-                            perDimension += $"Hörverstehen: {evaluation.hoerverstehenFeedback}\n";
-                        if (!string.IsNullOrWhiteSpace(evaluation.gespraechsfuehrungFeedback))
-                            perDimension += $"Gesprächsführung: {evaluation.gespraechsfuehrungFeedback}\n";
-                        if (!string.IsNullOrWhiteSpace(evaluation.empathieFeedback))
-                            perDimension += $"Empathie: {evaluation.empathieFeedback}\n";
-                        if (!string.IsNullOrWhiteSpace(evaluation.vollstaendigkeitFeedback))
-                            perDimension += $"Vollständigkeit: {evaluation.vollstaendigkeitFeedback}";
+                        AddCriterion("Sprachliche Angemessenheit", evaluation.sprachlicheAngemessenheitFeedback);
+                        AddCriterion("Inhaltliche Angemessenheit", evaluation.inhaltlicheAngemessenheitFeedback);
+                        AddCriterion("Malus Patientensicherheit", evaluation.malusPatientensicherheitFeedback);
                     }
+                    else
+                    {
+                        AddCriterion("Kommunikation", evaluation.kommunikationFeedback);
+                        AddCriterion("Hörverstehen", evaluation.hoerverstehenFeedback);
+                        AddCriterion("Gesprächsführung", evaluation.gespraechsfuehrungFeedback);
+                        AddCriterion("Empathie", evaluation.empathieFeedback);
+                        AddCriterion("Vollständigkeit", evaluation.vollstaendigkeitFeedback);
+                    }
+
+                    var sections = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(overall))
+                        sections.Add(FeedbackSection("Zusammenfassung", overall, richText: true));
+                    if (criteria.Count > 0)
+                        sections.Add(FeedbackSection("Kriterien", string.Join("\n", criteria), richText: true));
+                    body = string.Join("\n\n", sections);
                 }
 
-                string body = StripEmojis(overall ?? string.Empty);
-                if (!string.IsNullOrWhiteSpace(perDimension))
-                    body += StripEmojis(perDimension);
-
-                feedbackText.text = body;
+                feedbackText.text = StripEmojis(body);
+                FitFeedbackTextHeight();
             }
 
             bool isD2DDelayed = evaluation.roleType == ExamEvaluation.RoleType.DoctorToDoctor;
@@ -1845,8 +1891,8 @@ If any score is missing, set it to 0. Make sure all numbers are valid and within
                     if (colorCodeScores)
                         totalPointsD2DText.color = evaluation.passed ? Color.green : Color.red;
                     totalPointsD2DText.text = evaluation.usesD2DFiveCriteria
-                        ? $"{evaluation.totalPoints:F1} / 20"
-                        : $"{evaluation.gesamtD2D:F1} / 10";
+                        ? $"{evaluation.totalPoints:F0} / 20"
+                        : $"{evaluation.gesamtD2D:F0} / 10";
                 }
             }
             else
@@ -1858,7 +1904,7 @@ If any score is missing, set it to 0. Make sure all numbers are valid and within
                     if (colorCodeScores)
                         totalPointsD2PText.color = evaluation.passed ? Color.green : Color.red;
                     totalPointsD2PText.text = evaluation.usesD2DFiveCriteria
-                        ? $"{evaluation.totalPoints:F1} / 20"
+                        ? $"{evaluation.totalPoints:F0} / 20"
                         : $"{evaluation.totalPoints:F0} / {d2pTotalMaxInt}";
                 }
             }

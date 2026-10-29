@@ -61,13 +61,6 @@ namespace MedicalExam
         [Tooltip("If true, speaks the welcome text before starting the realtime conversation. Disable to skip intro.")]
         [SerializeField] private bool playWelcomeBeforeStart = true;
 
-        [Header("Welcome Text Preview UI")]
-        [Tooltip("Optional UI text field that shows the resolved Doctor-to-Doctor welcome text when PlayDoctorWelcome is triggered.")]
-        [SerializeField] private TMP_Text doctorWelcomePreviewText;
-
-        [Tooltip("Optional UI text field that shows the resolved Doctor-to-Patient welcome text when PlayPatientWelcome is triggered.")]
-        [SerializeField] private TMP_Text patientWelcomePreviewText;
-
         [Tooltip("Small delay before StartConversation after welcome finishes. Helps when remote prompts are still initializing.")]
         [SerializeField] private float startConversationDelaySeconds = 0.75f;
         
@@ -169,13 +162,13 @@ namespace MedicalExam
             string scenarioDesc = GetScenarioDescription();
             if (_selectedD2D)
             {
-                SetWelcomePreview(PrepareDoctorToDoctorText(scenarioDesc));
+                ShowOnlyCaseOnBoard();
                 if (!playWelcomeBeforeStart) { StartConversationImmediately(); return; }
                 StartCoroutine(PlayWelcomeAndStartConversation(scenarioDesc, true, OpenAITTSPlayer.VoiceType.DoctorToDoctor));
             }
             else
             {
-                SetWelcomePreview(PrepareDoctorToPatientText(scenarioDesc));
+                ShowOnlyCaseOnBoard();
                 if (!playWelcomeBeforeStart) { StartConversationImmediately(); return; }
                 StartCoroutine(PlayWelcomeAndStartConversation(scenarioDesc, false, OpenAITTSPlayer.VoiceType.DoctorToPatient));
             }
@@ -196,8 +189,7 @@ namespace MedicalExam
             }
 
             string scenarioDesc = GetScenarioDescription();
-            string welcomeText = PrepareDoctorToDoctorText(scenarioDesc);
-            SetWelcomePreview(welcomeText);
+            ShowOnlyCaseOnBoard();
 
             if (!playWelcomeBeforeStart)
             {
@@ -220,8 +212,7 @@ namespace MedicalExam
             }
 
             string scenarioDesc = GetScenarioDescription();
-            string welcomeText = PrepareDoctorToPatientText(scenarioDesc);
-            SetWelcomePreview(welcomeText);
+            ShowOnlyCaseOnBoard();
 
             if (!playWelcomeBeforeStart)
             {
@@ -369,14 +360,11 @@ namespace MedicalExam
             _isPlaying = false;
         }
 
-        private void SetWelcomePreview(string text)
+        // The welcome is only spoken; the board switches to showing just the case.
+        private void ShowOnlyCaseOnBoard()
         {
-            // Support either a single preview text field or separate doctor/patient fields.
-            if (doctorWelcomePreviewText != null)
-                doctorWelcomePreviewText.text = text ?? string.Empty;
-
-            if (patientWelcomePreviewText != null)
-                patientWelcomePreviewText.text = text ?? string.Empty;
+            if (examManager != null)
+                examManager.ShowOnlyCaseOnBoard();
         }
 
         private void EnsureReferences()
