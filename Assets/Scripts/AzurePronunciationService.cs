@@ -27,7 +27,7 @@ namespace MedicalExam
     /// Setup:
     ///   1. Add this component to the same GameObject as RealtimeMicrophone.
     ///   2. Assign the RealtimeMicrophone reference in the Inspector.
-    ///   3. Fill in your Azure subscriptionKey and region.
+    ///   3. Fill in the Azure Speech key + region in Assets/Resources/APIKeys.asset (wins over the fields here).
     ///   4. In MedicalExamManager, enable useAzurePronunciation and assign this component.
     /// </summary>
     public class AzurePronunciationService : MonoBehaviour
@@ -56,9 +56,16 @@ namespace MedicalExam
         private int _turnStartSample;
         private bool _turnMarked;
 
+        /// <summary>The shared APIKeyConfig asset wins when its Azure key is set, so rotating the key
+        /// there fixes this component even if a stale key/region is still serialized in the scene.
+        /// Key and region are taken together because a key only works in its own region.</summary>
+        private bool UseSharedConfig => !string.IsNullOrWhiteSpace(APIKeyConfig.Instance?.AzureSpeechKey);
+        private string ResolvedKey    => UseSharedConfig ? APIKeyConfig.Instance.AzureSpeechKey : subscriptionKey;
+        private string ResolvedRegion => UseSharedConfig ? APIKeyConfig.Instance.AzureSpeechRegion : region;
+
         public bool IsConfigured =>
-            !string.IsNullOrWhiteSpace(subscriptionKey) &&
-            !string.IsNullOrWhiteSpace(region) &&
+            !string.IsNullOrWhiteSpace(ResolvedKey) &&
+            !string.IsNullOrWhiteSpace(ResolvedRegion) &&
             realtimeMicrophone != null;
 
         // ── Public API ─────────────────────────────────────────────────────────────
@@ -86,7 +93,7 @@ namespace MedicalExam
         {
             if (!IsConfigured)
             {
-                onError?.Invoke("[Azure] Not configured — check subscriptionKey, region, and RealtimeMicrophone reference.");
+                onError?.Invoke("[Azure] Not configured — set the Azure Speech key + region in Resources/APIKeys.asset (or on this component) and assign RealtimeMicrophone.");
                 return;
             }
 
@@ -200,7 +207,7 @@ namespace MedicalExam
             Action<AzurePronunciationResult> onResult,
             Action<string> onError)
         {
-            string url = $"https://{region}.stt.speech.microsoft.com/speech/recognition/conversation" +
+            string url = $"https://{ResolvedRegion}.stt.speech.microsoft.com/speech/recognition/conversation" +
                          $"/cognitiveservices/v1?language={language}&format=detailed";
 
             // Pronunciation Assessment config (HundredMark, Word-level, Comprehensive)
@@ -224,7 +231,7 @@ namespace MedicalExam
             req.uploadHandler   = new UploadHandlerRaw(wav);
             req.downloadHandler = new DownloadHandlerBuffer();
             req.SetRequestHeader("Content-Type",             "audio/wav; codecs=audio/pcm; samplerate=16000");
-            req.SetRequestHeader("Ocp-Apim-Subscription-Key", subscriptionKey);
+            req.SetRequestHeader("Ocp-Apim-Subscription-Key", ResolvedKey);
             req.SetRequestHeader("Pronunciation-Assessment",  cfgBase64);
             req.timeout = Mathf.Clamp(timeoutSeconds, 10, 60);
 
@@ -241,36 +248,44 @@ namespace MedicalExam
             {
                 var resp  = JObject.Parse(req.downloadHandler.text);
                 var nBest = resp["NBest"]?[0];
-                var pa    = nBest?["PronunciationAssessment"];
+                // The REST short-audio API puts the scores directly on NBest[0]; the Speech SDK's JSON
+                // nests them under "PronunciationAssessment". Accept either.
+                var pa    = nBest?["PronunciationAssessment"] ?? nBest;
 
-                if (pa == null)
+                if (pa?["AccuracyScore"] == null)
                 {
-                    onError?.Invoke("[Azure] No PronunciationAssessment field in response.");
+                    onError?.Invoke($"[Azure] No pronunciation scores in response (RecognitionStatus={resp["RecognitionStatus"]}).");
                     yield break;
                 }
 
                 float acc  = pa["AccuracyScore"]?.Value<float>()      ?? 0f;
                 float flu  = pa["FluencyScore"]?.Value<float>()        ?? 0f;
                 float comp = pa["CompletenessScore"]?.Value<float>()   ?? 0f;
-                float pros = pa["ProsodyScore"]?.Value<float>()        ?? 0f;
-                // Weighted: accuracy 40%, fluency 30%, completeness 15%, prosody 15%
-                float overall = acc * 0.4f + flu * 0.3f + comp * 0.15f + pros * 0.15f;
+                // Azure only scores prosody for some locales (not de-DE) — don't count a missing score as 0.
+                float? pros = pa["ProsodyScore"]?.Value<float>();
+                // Prefer Azure's own aggregate; otherwise weight accuracy 40%, fluency 30%, completeness 15%, prosody 15%.
+                float overall = pa["PronScore"]?.Value<float>()
+                    ?? (pros.HasValue
+                        ? acc * 0.4f + flu * 0.3f + comp * 0.15f + pros.Value * 0.15f
+                        : (acc * 0.4f + flu * 0.3f + comp * 0.15f) / 0.85f);
 
-                // Collect words with low accuracy (< 60) as problem words
+                // Collect words with low accuracy (< 60) or flagged as mispronounced as problem words
                 var wordNodes = nBest?["Words"] as JArray;
                 var bad = new List<string>();
                 if (wordNodes != null)
                 {
                     foreach (var w in wordNodes)
                     {
-                        float wacc = w["PronunciationAssessment"]?["AccuracyScore"]?.Value<float>() ?? 100f;
-                        if (wacc < 60f)
+                        var wpa = w["PronunciationAssessment"] ?? w;
+                        float wacc = wpa["AccuracyScore"]?.Value<float>() ?? 100f;
+                        string errorType = wpa["ErrorType"]?.ToString();
+                        if (wacc < 60f || errorType == "Mispronunciation")
                             bad.Add(w["Word"]?.ToString() ?? "");
                     }
                 }
 
-                string fb = $"Aussprache: {acc:0}% Genauigkeit, {flu:0}% Flüssigkeit, " +
-                            $"{comp:0}% Vollständigkeit, {pros:0}% Prosodie.";
+                string fb = $"Aussprache: {overall:0}% gesamt, {acc:0}% Genauigkeit, {flu:0}% Flüssigkeit, " +
+                            $"{comp:0}% Vollständigkeit" + (pros.HasValue ? $", {pros.Value:0}% Prosodie." : ".");
                 if (bad.Count > 0)
                     fb += $" Problematische Wörter: {string.Join(", ", bad)}.";
 
@@ -279,7 +294,7 @@ namespace MedicalExam
                     accuracyScore      = acc,
                     fluencyScore       = flu,
                     completenessScore  = comp,
-                    prosodyScore       = pros,
+                    prosodyScore       = pros ?? 0f,
                     overallScore       = overall,
                     feedback           = fb,
                     problematicWords   = bad.ToArray()
